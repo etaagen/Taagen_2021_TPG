@@ -1,4 +1,4 @@
-# Taagen et al., 2018, The Plant Genome 
+# Taagen et al., 2021, The Plant Genome 
 
 **SynOpDH analysis** 
 
