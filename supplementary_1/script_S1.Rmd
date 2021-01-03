@@ -549,7 +549,7 @@ tidy_LOD <- LOD_BLUP %>%
   arrange(Trait, chr, pos) 
 
 #table
-LOD_BLUP %>% 
+a = LOD_BLUP %>% 
   rownames_to_column(var = "marker") %>% 
   rename(position = pos) %>% 
   rename(TGW = lod.TGW_BLUP) %>% 
@@ -611,6 +611,9 @@ LOD_BLUP %>%
         rows = `HD` > 3.09
       ))) %>%
   tab_options(table.align='left')
+
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
 ```
 
 ### Phenotype variation explained by QTL   
@@ -623,12 +626,15 @@ QTL5A_GW = (1 - 10^((-2*16.81)/162))*100
 QTL6A_TGW = (1 - 10^((-2*3.18)/162))*100
 QTL6A_GL = (1 - 10^((-2*3.14)/162))*100
 
-tibble(QTL2D_TGW, QTL2D_GL, QTL5A_TGW, QTL5A_GW, QTL6A_TGW, QTL6A_GL) %>% 
+a = tibble(QTL2D_TGW, QTL2D_GL, QTL5A_TGW, QTL5A_GW, QTL6A_TGW, QTL6A_GL) %>% 
   pivot_longer(cols = starts_with("Q"), 
                names_to = "QTL",
                values_to = "% variation") %>%
   gt()%>%
   tab_options(table.align='left')
+
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
 ```
 
 ### QTL plots
@@ -731,7 +737,8 @@ subset[complete.cases(subset), ] %>%
 ```{r QTL pos, echo=FALSE}
 
 pos <- tibble(QTL = c("QTgw.cnl-2D", "QTgw.cnl-5A", "QTgw.cnl-6A"), 'Flanking markers' = c("synopGBS929 - synopGBS579", "wmc705 - synopGBS284", "synopGBS42 - synopGBS1114"), cM = c("19.82 - 43.83", "0.1 - 4.49", "41.68 - 41.68"), 'RefSeqV1.0 flanking' = c("10,718,874 - 56,072,170", "290,035,203 - 487,755,214", "314,315,653 - 440,255,621"), 'Peak marker' = c("synopGBS1212", "synopGBS429", "synopGBS811"), 'RefSeqV1.0 peak' = c("35,003,633", "380,823,821", "358,607,834"))
-pos %>% 
+
+a = pos %>% 
   gt() %>% 
   tab_footnote(
     footnote = "chromosome 2D and chromosome 6A markers reordered to match physical map order", 
@@ -740,6 +747,9 @@ pos %>%
       )
     )%>%
   tab_options(table.align='left')
+
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
 ```
 
 ### Test for interaction between 2D, 5A and 6A TGW QTL
@@ -813,7 +823,7 @@ summary(aov(BLUP_HD ~ KASP_341510829, data = chr5Apheno))
 table1 <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_1/file_S1.6.csv", na = c(""))
 parent_check <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_1/file_S1.7.csv", na = c(""))
 
-table1 %>% 
+a = table1 %>% 
   rename("TGW (g)" = "TGW",
          "GL (mm)" = "GL",
          "GW (mm)" = "GW",
@@ -880,11 +890,14 @@ table1 %>%
     column_labels.border.bottom.width= px(3),
   )%>%
   tab_options(table.align='left')
+
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
 ```
 
 ### Parent and check entry averages across all observations
 ```{r parent check, echo=FALSE}
-parent_check %>% 
+a = parent_check %>% 
   rename("TGW (g)" = "TGW",
          "GL (mm)" = "GL",
          "GW (mm)" = "GW",
@@ -895,6 +908,9 @@ parent_check %>%
     missing_text = " "
   )%>%
   tab_options(table.align='left')
+
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
 ```
 
 ### Boxplots chromosome 5AS vs TGW
@@ -932,7 +948,7 @@ A_O <-chr5Apheno %>%
   filter(chr5AS_status == "absent", KASP_341510829 == "Opata")
 
 #Recombinants table
-P_W %>% 
+a = P_W %>% 
   rbind(A_O) %>% 
   rename(TGW = BLUP_TGW) %>% 
   rename(GL = BLUP_GL) %>% 
@@ -957,6 +973,8 @@ P_W %>%
   ) %>%
   tab_options(table.align='left')
 
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
 
 #Allele frequency
 total <- length(unique(chr5Apheno$Entry)) #including NAs
@@ -981,7 +999,7 @@ subset <- tibble(P5AS/total, A5AS/total, OpataQTL/total, W7984QTL/total) %>%
                values_to = "Allele frequency") %>% 
   cbind(Allele) 
 subset <-  subset(subset, select = -c(drop))
-subset %>% 
+a = subset %>% 
   relocate(Allele, .before = "Allele frequency") %>% 
   gt(rowname_col = "Allele") %>% 
   fmt_number(
@@ -996,6 +1014,8 @@ subset %>%
   ) %>%
   tab_options(table.align='left')
 
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
 
 #Haplotype freq and LD
 P_W <- length(P_W$Entry)
@@ -1020,7 +1040,7 @@ subset <- tibble(P_O/total, P_W/total, A_O/total, A_W/total, r2) %>%
                values_to = "Haplotype frequency") %>% 
   cbind(Haplotype)
 subset <-  subset(subset, select = -c(drop))
-subset %>% 
+a = subset %>% 
   relocate(Haplotype, .before = "Haplotype frequency") %>% 
   gt(rowname_col = "Haplotype") %>% 
   fmt_number(
@@ -1038,6 +1058,9 @@ subset %>%
         rows = "coefficient of correlation" 
   )))%>%
   tab_options(table.align='left')
+
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
 ```
 
 ### T-test: phenotype vs chromosome 5AS presence / absence OR QTL Opata / W7984 allele
@@ -1071,7 +1094,7 @@ subset <- tibble(TGW_5ASt.test, TGW_QTLt.test, GL_5ASt.test, GL_QTL5ASt.test, GW
                values_to = "P value") %>% 
   cbind(t.test) 
 subset <-  subset(subset, select = -c(drop))
-subset %>% 
+a = subset %>% 
   relocate(t.test, .before = "P value") %>% 
   gt() %>% 
   tab_style(
@@ -1084,5 +1107,8 @@ subset %>%
   fmt_scientific(
   columns = 2,
   decimals = 3)
+
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
 ```
 
