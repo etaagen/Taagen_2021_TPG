@@ -1,2 +1,9 @@
-# Taagen_2021_TPG
-Data, supplementary material, and scripts for reproducing results from Taagen et al., 2021, The Plant Genome
+# Taagen et al., 2018, The Plant Genome 
+
+**SynOpDH analysis** 
+
+**SynOp HIF analysis**  
+
+**DPA analysis**. 
+
+**RNA-seq analysis**. 
