@@ -1,0 +1,1088 @@
+---
+title: "script_S1: SynOpDH analysis"
+output: html_document
+always_allow_html: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+All packages, data, and statistical analysis for reproducing SynOpDH population results reported in Taagen et al. 2021. Please see `script_S1.Rmd` for full R script.     
+
+**Load packages**
+```{r load packages, message=FALSE}
+library(tidyverse) # R/tidyverse version 1.3.0
+library(lme4) #R/lme4 package version 1.1-21 
+library(knitr) # R/knitr package version 1.28 
+library(kableExtra) # R/kableExtra package version 1.1.0
+library(qtl) #R/qtl package version 1.46-2
+library(tibble) # R/tible package version 2.1.3 
+library(ggpubr) # R/ggpubr package version 0.2.5 
+library(scales) # R/scales package version 1.1.0
+library(svglite) #R/svglite version 1.2.3.2
+library(gt) #R/gt version 0.2.2
+library(car) # R/car package version 3.0-10
+library(emmeans) # R/emmeans package version 1.4.6
+library(rstatix) # R/rstatix package version 0.6.0
+```
+
+### SynOpDH broad sense heritability and BLUP phenotypes 
+
+A 162-entry subset of 215 SynOpDH entries were grown in headrows in four field-year combinations, with up to six replicates per entry, from 2016-2018 in Ithaca, NY. Univariate mixed linear models with random environment and genotype effects were fitted with the R/lme4 package to obtain best linear unbiased predictions (BLUPs) for TGW, GL, GW and HD phenotypes across the four environments.  
+
+**Load data**  
+```{r load tidy phenotypes, message=FALSE}
+SynOpDH_Phenotypes <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_1/file_S1.1.csv", na = "")
+SynOpDH_Phenotypes$SynOpDH_entry = as.factor(SynOpDH_Phenotypes$SynOpDH_entry)
+SynOpDH_Phenotypes$Year = as.factor(SynOpDH_Phenotypes$Year)
+SynOpDH_Phenotypes$Location = as.factor(SynOpDH_Phenotypes$Location)
+SynOpDH_Phenotypes$Rep = as.factor(SynOpDH_Phenotypes$Rep)
+SynOpDH_Phenotypes$Environment = as.factor(SynOpDH_Phenotypes$Environment)
+```
+
+**Falconer & Mackay `H^2` estimate function**  
+
+$$ 
+H^2 = \frac{\sigma^2_G}{\sigma^2_G + \frac{\sigma^2_{GxE}}{l} + \frac{\sigma^2_r}{rl}}
+$$   
+
+
+Where $H^2$ is the broad-sense heritability estimate, $\sigma^2_G$ is the genetic variance, $\sigma^2_{GxE}$ is the genotype x environment variance, $\sigma^2_r$ is the residual variance, $l$ is the number of environments, and $r$ is the number of unique observations. 
+
+```{r H2 function, echo=FALSE}
+#Define H2 function
+H2 <- function(model, l, r){ #l = # of environments, r = # of observations
+  variance <- as.data.frame(VarCorr(model))
+  sigma2_g <- variance$sdcor[variance$grp=="SynOpDH_entry"] # [geno sd]
+  if (length(variance$sdcor[variance$grp=="Environment"]) == 0){
+    sigma2_e <- variance$sdcor[variance$grp=="Rep:Environment"]
+  } else {
+    sigma2_e <- variance$sdcor[variance$grp=="Environment"] # [env sd]
+  }
+  sigma2_ge <- variance$sdcor[variance$grp=="SynOpDH_entry:Environment"] #[gxe sd]
+  sigma2_r <- variance$sdcor[variance$grp=="Residual"] # [residual, sd]
+  if (length(sigma2_ge) == 0) {
+    sigma2_g/(sigma2_g + (sigma2_e/l) + (sigma2_r/(l*r)))
+  } else {
+    sigma2_g/(sigma2_g + (sigma2_e/l) + (sigma2_ge/l) + (sigma2_r/(l*r)))
+  }
+}
+```
+
+**TGW** 
+
+```{r TGW models, warning=FALSE, echo=FALSE}
+TGW_model0 <- lmer(TGW ~ (1|SynOpDH_entry),
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(TGW_model0) #Large residual variance
+
+TGW_model1 <- lmer(TGW ~ (1|SynOpDH_entry) + (1|Environment), 
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(TGW_model1) #Environment accounts for the year:rep 
+
+TGW_model2 <- lmer(TGW ~ (1|SynOpDH_entry) + (1| Environment) + Rep, 
+                   data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(TGW_model2) #rep as a fixed effect explains very little variance
+
+TGW_model3 <- lmer(TGW ~ (1|SynOpDH_entry) + (1|Rep:Environment), 
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(TGW_model3) #Rep is dependent on environment, nest them
+
+TGW_model3.5 <- lmer(TGW ~ (1|SynOpDH_entry) + (1|Rep:Environment) + (1|SynOpDH_entry:Environment), 
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(TGW_model3.5) #Accounting for GxE reduces residual variance 
+
+TGW_model4 <- lmer(TGW ~ (1|SynOpDH_entry) + (1|Rep:Environment) + (1|SynOpDH_entry:Environment) + HD, 
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(TGW_model4) #unable to evaluate scaled gradient and model failed to converge, degenerate  Hessian with 1 negative eigenvalues
+#Don't include model 4
+TGW_model5 <- lmer(TGW ~ (1|SynOpDH_entry) + (1|Rep:Environment) + HD, 
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(TGW_model5) # Accounting for HD can reduce resisdual variance and increase genetic variance explained
+
+AIC_TGW <- AIC(TGW_model0, TGW_model1, TGW_model2, TGW_model3, TGW_model3.5, TGW_model5)
+#warning error because some missing values in `SynOpDH_entry` and lmer default to omit   
+#kable(AIC_TGW) #model 5 has lowest AIC
+```
+
+
+```{r TGW model H2 and AIC table, echo=FALSE}
+H2_TGW <- c(NA, H2(TGW_model1, 3, 5),H2(TGW_model2, 3, 5),H2(TGW_model3, 3, 5),H2(TGW_model3.5, 3, 5),H2(TGW_model5, 3, 5))
+model_table <- tribble(
+  ~"Mixed model", ~"TGW H^2", ~"AIC", 
+  "TGW ~ (1|Entry)", H2_TGW[1], AIC_TGW[1,2],
+  "TGW ~ (1|Entry) + (1|Env)", H2_TGW[2], AIC_TGW[2,2],
+  "TGW ~ (1|Entry) + (1|Env) + Rep", H2_TGW[3], AIC_TGW[3,2],
+  "TGW ~ (1|Entry) + (1|Rep:Env)", H2_TGW[4], AIC_TGW[4,2],
+  "TGW ~ (1|Entry) + (1|Rep:Env) + (1|Entry:Env)", H2_TGW[5], AIC_TGW[5,2],
+  "TGW ~ (1|Entry) + (1|Rep:Env) + HD", H2_TGW[6], AIC_TGW[6,2]
+  ) 
+
+model_footnote <- model_table
+names(model_footnote)[1] <- paste0(names(model_footnote)[1], 
+                                footnote_marker_alphabet(1))
+names(model_footnote)[2] <- paste0(names(model_footnote)[2], 
+                                footnote_marker_alphabet(2))
+names(model_footnote)[3] <- paste0(names(model_footnote)[3], 
+                                footnote_marker_alphabet(3))
+
+kable(digits = 2, model_footnote, escape = F) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
+                full_width = F) %>%
+  footnote(alphabet = c("Mixed model variables are defined as: thousand grain weight (TGW), SynOpDH line entry (Entry), year environment unique to location and year (Env), replicate (Rep), heading date (HD),", "Broad sense heritability calculated with Falconer & Mackay 1996 formula", "AIC was calculated using `AIC` in R/stats package"),
+           footnote_as_chunk = T) 
+```
+
+**GL**  
+
+```{r GL models, warning=FALSE, echo=FALSE}
+GL_model0 <- lmer(GL ~ (1|SynOpDH_entry),
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(GL_model0) #more residual variance than genetic variance
+
+GL_model1 <- lmer(GL ~ (1|SynOpDH_entry) + (1|Environment), 
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(GL_model1) #Environment accounts for the year:rep 
+
+GL_model2 <- lmer(GL ~ (1|SynOpDH_entry) + (1| Environment) + Rep, 
+                   data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(GL_model2) #rep as a fixed effect explains very little variance
+
+GL_model3 <- lmer(GL ~ (1|SynOpDH_entry) + (1|Rep:Environment), 
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(GL_model3) #Rep is dependent on environment, nest them
+
+GL_model3.5 <- lmer(GL ~ (1|SynOpDH_entry) + (1|Rep:Environment) + (1|SynOpDH_entry:Environment), 
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(GL_model3.5) #Accounting for GxE reduces residual variance 
+
+GL_model4 <- lmer(GL ~ (1|SynOpDH_entry) + (1|Rep:Environment) + (1|SynOpDH_entry:Environment) + HD, 
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(GL_model4) #model failed to converge, don't include model 4
+GL_model5 <- lmer(GL ~ (1|SynOpDH_entry) + (1|Rep:Environment) + HD, 
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(GL_model5) #unable to evaluate scaled gradient and model failed to converge, degenerate  Hessian with 1 negative eigenvalues
+#Don't include model 5
+
+AIC_GL <- AIC(GL_model0, GL_model1, GL_model2, GL_model3, GL_model3.5)
+#warning error because some missing values in `SynOpDH_entry` and lmer default to omit   
+#kable(AIC_GL)
+```
+
+```{r GL model H2 and AIC table, echo=FALSE}
+H2_GL <- c(NA,H2(GL_model1, 4, 6),H2(GL_model2,  4, 6),H2(GL_model3,  4, 6),H2(GL_model3.5,  4, 6))
+model_table <- tribble(
+  ~"Mixed model", ~"GL H^2", ~"AIC", 
+  "GL ~ (1|Entry)", H2_GL[1], AIC_GL[1,2],
+  "GL ~ (1|Entry) + (1|Env)", H2_GL[2], AIC_GL[2,2],
+  "GL ~ (1|Entry) + (1|Env) + Rep", H2_GL[3], AIC_GL[3,2],
+  "GL ~ (1|Entry) + (1|Rep:Env)", H2_GL[4], AIC_GL[4,2],
+  "GL ~ (1|Entry) + (1|Rep:Env) + (1|Entry:Env)", H2_GL[5], AIC_GL[5,2]
+  ) 
+
+model_footnote <- model_table
+names(model_footnote)[1] <- paste0(names(model_footnote)[1], 
+                                footnote_marker_alphabet(1))
+names(model_footnote)[2] <- paste0(names(model_footnote)[2], 
+                                footnote_marker_alphabet(2))
+names(model_footnote)[3] <- paste0(names(model_footnote)[3], 
+                                footnote_marker_alphabet(3))
+
+kable(digits = 2, model_footnote, escape = F) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
+                full_width = F) %>%
+  footnote(alphabet = c("Mixed model variables are defined as: grain length (GL), SynOpDH line entry (Entry), year environment unique to location and year (Env), replicate (Rep), heading date (HD),", "Broad sense heritability calculated with Falconer & Mackay 1996 formula", "AIC was calculated using `AIC` in R/stats package"),
+           footnote_as_chunk = T) 
+```
+
+
+**GW**  
+
+```{r GW models, warning=FALSE, echo=FALSE}
+GW_model0 <- lmer(GW ~ (1|SynOpDH_entry),
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(GW_model0) #more residual variance than genetic variance
+
+GW_model1 <- lmer(GW ~ (1|SynOpDH_entry) + (1|Environment), 
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(GW_model1) #warning, model failed to converge
+
+GW_model2 <- lmer(GW ~ (1|SynOpDH_entry) + (1| Environment) + Rep, 
+                   data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(GW_model2) #rep as a fixed effect explains very little variance
+
+GW_model3 <- lmer(GW ~ (1|SynOpDH_entry) + (1|Rep:Environment), 
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(GW_model3) #Rep is dependent on environment, nest them
+
+GW_model3.5 <- lmer(GW ~ (1|SynOpDH_entry) + (1|Rep:Environment) + (1|SynOpDH_entry:Environment), 
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(GW_model3.5) #Accounting for GxE reduces residual variance 
+
+GW_model4 <- lmer(GW ~ (1|SynOpDH_entry) + (1|Rep:Environment) + (1|SynOpDH_entry:Environment) + HD, 
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(GW_model4) #most variance explained by genotype
+GW_model5 <- lmer(GW ~ (1|SynOpDH_entry) + (1|Rep:Environment) + HD, 
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(GW_model5) #removing GxE doesn't change variance estimates much
+
+AIC_GW <- AIC(GW_model0, GW_model1, GW_model2, GW_model3, GW_model3.5, GW_model4, GW_model5)
+#warning error because some missing values in `SynOpDH_entry` and lmer default to omit   
+#kable(AIC_GW)
+```
+
+```{r GW model H2 and AIC table, echo=FALSE}
+H2_GW <- c(NA,H2(GW_model1, 4, 6),H2(GW_model2,  4, 6),H2(GW_model3,  4, 6),H2(GW_model3.5,  4, 6),H2(GW_model4,  4, 6),H2(GW_model5,  4, 6))
+model_table <- tribble(
+  ~"Mixed model", ~"GW H^2", ~"AIC", 
+  "GW ~ (1|Entry)", H2_GW[1], AIC_GW[1,2],
+  "GW ~ (1|Entry) + (1|Env)", H2_GW[2], AIC_GW[2,2],
+  "GW ~ (1|Entry) + (1|Env) + Rep", H2_GW[3], AIC_GW[3,2],
+  "GW ~ (1|Entry) + (1|Rep:Env)", H2_GW[4], AIC_GW[4,2],
+  "GW ~ (1|Entry) + (1|Rep:Env) + (1|Entry:Env)", H2_GW[5], AIC_GW[5,2],
+  "GW ~ (1|Entry) + (1|Rep:Env) + (1|Entry:Env) + HD", H2_GW[6], AIC_GW[6,2],
+  "GW ~ (1|Entry) + (1|Rep:Env) + HD", H2_GW[7], AIC_GW[7,2]
+  ) 
+
+model_footnote <- model_table
+names(model_footnote)[1] <- paste0(names(model_footnote)[1], 
+                                footnote_marker_alphabet(1))
+names(model_footnote)[2] <- paste0(names(model_footnote)[2], 
+                                footnote_marker_alphabet(2))
+names(model_footnote)[3] <- paste0(names(model_footnote)[3], 
+                                footnote_marker_alphabet(3))
+
+
+kable(digits = 2, model_footnote, escape = F) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
+                full_width = F) %>%
+  footnote(alphabet = c("Mixed model variables are defined as: grain width (GW) , SynOpDH line entry (Entry), year environment unique to location and year (Env), replicate (Rep), heading date (HD),", "Broad sense heritability calculated with Falconer & Mackay 1996 formula", "AIC was calculated using `AIC` in R/stats package"),
+           footnote_as_chunk = T) 
+```
+
+
+**HD**  
+
+```{r HD models, warning=FALSE, echo=FALSE}
+HD_model0 <- lmer(HD ~ (1|SynOpDH_entry),
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(HD_model0) 
+
+HD_model1 <- lmer(HD ~ (1|SynOpDH_entry) + (1|Environment), 
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(HD_model1) #Environment represents year:location
+
+HD_model2 <- lmer(HD ~ (1|SynOpDH_entry) + (1| Environment) + Rep, 
+                   data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(HD_model2) #rep as a fixed effect explains very little variance
+
+HD_model3 <- lmer(HD ~ (1|SynOpDH_entry) + (1|Rep:Environment), 
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(HD_model3) #Rep is dependent on environment, nest them
+
+HD_model3.5 <- lmer(HD ~ (1|SynOpDH_entry) + (1|Rep:Environment) + (1|SynOpDH_entry:Environment), 
+                           data = SynOpDH_Phenotypes, REML = FALSE)
+#summary(HD_model3.5) #Accounting for GxE reduces residual variance 
+
+AIC_HD <- AIC(HD_model0, HD_model1, HD_model2, HD_model3, HD_model3.5)
+#kable(AIC_HD)
+```
+
+```{r HD model H2 and AIC table, echo=FALSE}
+H2_GW <- c(NA,H2(HD_model1, 2, 4),H2(HD_model2, 2, 4),H2(HD_model3, 2, 4),H2(HD_model3.5, 2, 4))
+model_table <- tribble(
+  ~"Mixed model", ~"HD ^2", ~"AIC", 
+  "HD ~ (1|Entry)", H2_GW[1], AIC_HD[1,2],
+  "HD ~ (1|Entry) + (1|Env)", H2_GW[2], AIC_HD[2,2],
+  "HD ~ (1|Entry) + (1|Env) + Rep", H2_GW[3], AIC_HD[3,2],
+  "HD ~ (1|Entry) + (1|Rep:Env)", H2_GW[4], AIC_HD[4,2],
+  "HD ~ (1|Entry) + (1|Rep:Env) + (1|Entry:Env)", H2_GW[5], AIC_HD[5,2]
+  ) 
+
+model_footnote <- model_table
+names(model_footnote)[1] <- paste0(names(model_footnote)[1], 
+                                footnote_marker_alphabet(1))
+names(model_footnote)[2] <- paste0(names(model_footnote)[2], 
+                                footnote_marker_alphabet(2))
+names(model_footnote)[3] <- paste0(names(model_footnote)[3], 
+                                footnote_marker_alphabet(3))
+
+kable(digits = 2, model_footnote, escape = F) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
+                full_width = F) %>%
+  footnote(alphabet = c("Mixed model variables are defined as: heading date (HD) , SynOpDH line entry (Entry), year environment unique to location and year (Env), replicate (Rep)", "Broad sense heritability calculated with Falconer & Mackay 1996 formula", "AIC was calculated using `AIC` in R/stats package"),
+           footnote_as_chunk = T) 
+```
+
+### Select models, extract BLUPs
+
+The models were selected based on low AIC value and improved H^2 estimate:  
+
+* `TGW ~ (1|Entry) + (1|Rep:Env) + HD`    
+
+* `GL ~ (1|Entry) + (1|Rep:Env) + (1|Entry:Env)`    
+
+* `GW ~ (1|Entry) + (1|Rep:Env) + HD`   
+
+* `HD ~ (1|Entry) + (1|Rep:Env) + (1|Entry:Env)`   
+
+**Extract random effects from univariate mixed linear models for entries (obtain BLUPs):** 
+
+```{r BLUP}
+BLUP_TGW <- ranef(TGW_model5)$SynOpDH_entry 
+BLUP_GL <- ranef(GL_model3.5)$SynOpDH_entry 
+BLUP_GW <- ranef(GW_model5)$SynOpDH_entry 
+BLUP_HD <- ranef(HD_model3.5)$SynOpDH_entry 
+```
+
+**Phenotype means, add to BLUP for scaled phenotype value:** 
+```{r phenotype mean}
+TGW_mean <- mean(SynOpDH_Phenotypes$TGW, na.rm = TRUE) 
+BLUP_TGW <- BLUP_TGW + TGW_mean
+names(BLUP_TGW)[1] <- "TGW"
+
+GL_mean <- mean(SynOpDH_Phenotypes$GL, na.rm = TRUE)
+BLUP_GL <- BLUP_GL + GL_mean
+names(BLUP_GL)[1] <- "GL"
+
+GW_mean <- mean(SynOpDH_Phenotypes$GW, na.rm = TRUE)
+BLUP_GW <- BLUP_GW + GW_mean
+names(BLUP_GW)[1] <- "GW"
+
+HD_mean <- mean(SynOpDH_Phenotypes$HD, na.rm = TRUE)
+BLUP_HD <- BLUP_HD + HD_mean
+names(BLUP_HD)[1] <- "HD"
+```
+
+**Create csv files**   
+*eval = FALSE, BLUP files in repo, `file_S1.8.csv`*
+```{r csv output, eval = FALSE}
+write.csv(BLUP_TGW, "SynOpDH_BLUP_TGW.csv")
+write.csv(BLUP_GL, "SynOpDH_BLUP_GL.csv")
+write.csv(BLUP_GW, "SynOpDH_BLUP_GW.csv")
+write.csv(BLUP_HD, "SynOpDH_BLUP_HD.csv")
+```
+
+### SynOpDH Genetic Linkage Map
+
+A genetic linkage map of the SynOpDH population was constructed from a subset of 1,551 [GBS](https://doi.org/10.1371/journal.pone.0032253) and [SSR](https://wheat.pw.usda.gov/cgi-bin/GG3/browse.cgi?class=marker) markers using the maximum likelihood algorithm in `R/qtl`.
+
+The `SynOpDH_Import_GeneticMap.csv` data set contains SynOpDH genotype data and genetic positions of markers on all chromosomes, and an index phenotype (TGW BLUP). The `SynOpDH_Import_GeneticMap.csv` marker order has not been constructed using maximum likelihood, and markers are spaced every cM. "A" genotype represent W7984 variants of genetic markers, "B" genotype represent Opata variants of genetic markers.  
+
+**Load data**
+```{r load data for Rqtl, warning=FALSE}
+SynOpDH <- read.cross("csvr",  file = "https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_1/file_S1.2.csv", map.function = "kosambi", na.strings=c("-","NA"))
+ 
+SynOpDH<- convert2riself(SynOpDH) #changes cross type from f2 to inbred population
+
+summary(SynOpDH)
+```
+
+**Maximum likelihood genetic map**  
+The import file contains genetic markers evenly spaced every cM. The code below compares and selects the best marker order by maximum likelihood analysis.   
+
+*Note: there is a small level of randomness when calculating marker positions, even when receiving identical inputs and parameters*  
+*Eval set to FALSE because computationally intensive, please set to TRUE to validate results.*
+
+```{r genetic map, eval=FALSE}
+est.map(SynOpDH, map.function = "kosambi") #restimate cM 
+#1A
+SynOpDH_ripple <- ripple(SynOpDH, chr = "1A", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple) 
+SynOpDH <- switch.order(SynOpDH, chr = "1A", SynOpDH_ripple[1,])
+#1B
+SynOpDH_ripple <- ripple(SynOpDH, chr = "1B", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "1B", SynOpDH_ripple[1,])
+#1D
+SynOpDH_ripple <- ripple(SynOpDH, chr = "1D", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "1D", SynOpDH_ripple[1,])
+#2A
+SynOpDH_ripple <- ripple(SynOpDH, chr = "2A", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "2A", SynOpDH_ripple[1,])
+#2B
+SynOpDH_ripple <- ripple(SynOpDH, chr = "2B", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "2B", SynOpDH_ripple[1,])
+#2D
+SynOpDH_ripple <- ripple(SynOpDH, chr = "2D", window = 2, method = "likelihood", map.function = "kosambi", maxit=10000)
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "2D", SynOpDH_ripple[1,])
+#3A
+SynOpDH_ripple <- ripple(SynOpDH, chr = "3A", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "3A", SynOpDH_ripple[1,])
+#3B
+SynOpDH_ripple <- ripple(SynOpDH, chr = "3B", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "3B", SynOpDH_ripple[1,])
+#3D
+SynOpDH_ripple <- ripple(SynOpDH, chr = "3D", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "3D", SynOpDH_ripple[1,])
+#4A
+SynOpDH_ripple <- ripple(SynOpDH, chr = "4A", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "4A", SynOpDH_ripple[1,])
+#4B
+SynOpDH_ripple <- ripple(SynOpDH, chr = "4B", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "4B", SynOpDH_ripple[1,])
+#4D
+SynOpDH_ripple <- ripple(SynOpDH, chr = "4D", window = 2, method = "likelihood", map.function = "kosambi", maxit = 10000)
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "4D", SynOpDH_ripple[1,])
+#5A
+SynOpDH_ripple <- ripple(SynOpDH, chr = "5A", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "5A", SynOpDH_ripple[1,])
+#5B
+SynOpDH_ripple <- ripple(SynOpDH, chr = "5B", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "5B", SynOpDH_ripple[1,])
+#5D
+SynOpDH_ripple <- ripple(SynOpDH, chr = "5D", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "5D", SynOpDH_ripple[1,])
+#6A
+SynOpDH_ripple <- ripple(SynOpDH, chr = "6A", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "6A", SynOpDH_ripple[1,])
+#6B
+SynOpDH_ripple <- ripple(SynOpDH, chr = "6B", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "6B", SynOpDH_ripple[1,])
+#6D
+SynOpDH_ripple <- ripple(SynOpDH, chr = "6D", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "6D", SynOpDH_ripple[1,])
+#7A
+SynOpDH_ripple <- ripple(SynOpDH, chr = "7A", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "7A", SynOpDH_ripple[1,])
+#7B
+SynOpDH_ripple <- ripple(SynOpDH, chr = "7B", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "7B", SynOpDH_ripple[1,])
+#7D
+SynOpDH_ripple <- ripple(SynOpDH, chr = "7D", window = 2, method = "likelihood", map.function = "kosambi")
+summary(SynOpDH_ripple)
+SynOpDH <- switch.order(SynOpDH, chr = "7D", SynOpDH_ripple[1,])
+
+plot.map(SynOpDH)
+```
+
+**Export map file:**  
+*Eval set to False, `file_S1.9.csv` available in repo, and is the marker order used for QTL mapping, import file `file_ S1.3.csv` and `file_ S1.4.csv`. Please set eval to TRUE to validate results*  
+```{r Export map, eval=FALSE}
+SynOpDHMap<-pull.map(SynOpDH, as.table=T)
+write.csv(SynOpDHMap, "file_S1.9.csv")
+```
+
+### QTL mapping
+
+In order to associate SynOpDH genotype and phenotype data, QTL mapping was performed with the R package "qtl". The `file_ S1.3.csv` data set contains all SynOpDH phenotype data, genotype data and genetic linkage map positions (from `file_S1.9.csv`) of markers on all chromosomes. The markers on chromosome 5A are in order of physical position, and a single marker representing the chromosome 5AS structural variant has been included as well (1,552 markers total). "A" genotype represent W7984 variants of genetic markers, "B" genotype represent Opata variants of genetic markers.    
+
+**Load data**  
+```{r load data for qtl mapping, warning=FALSE}
+#SynOpDH 5A physical positions
+SynOpDH <- read.cross("csvr", file = "https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_1/file_S1.3.csv", map.function = "kosambi", na.strings=c("-","NA"))
+#SynOpDH 5A cM
+SynOpDH_cM <- read.cross("csvr", file = "https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_1/file_S1.4.csv", map.function = "kosambi", na.strings=c("-","NA"))
+
+SynOpDH<-convert2riself(SynOpDH) #changes cross type from f2 to inbred selfing population
+SynOpDH <- jittermap(SynOpDH) #some markers at same position 
+
+SynOpDH_cM<-convert2riself(SynOpDH_cM) #changes cross type from f2 to inbred selfing population
+SynOpDH_cM <- jittermap(SynOpDH_cM) #some markers at same position 
+
+summary(SynOpDH)
+SynOpDH_map <- pull.map(SynOpDH, as.table=T)
+```
+
+**Scan for QTL**
+```{r scanone, warning=FALSE}
+#impute missing genotype
+SynOpDH <- fill.geno(SynOpDH, method = "imp")
+SynOpDH_cM <- fill.geno(SynOpDH_cM, method = "imp")
+
+SynOpData <- calc.genoprob(SynOpDH, step = 0, map.function = "kosambi") 
+SynOpData_cM <- calc.genoprob(SynOpDH_cM, step = 0, map.function = "kosambi") 
+
+#warning, scanone will drop individuals with missing phenotypes
+TGW_BLUP <- scanone(SynOpData, pheno.col = "BLUP_TGW", method = "hk")
+GL_BLUP <- scanone(SynOpData, pheno.col = "BLUP_GL", method = "hk")
+GW_BLUP <- scanone(SynOpData, pheno.col = "BLUP_GW", method = "hk") 
+HD_BLUP <- scanone(SynOpData, pheno.col = "BLUP_HD", method = "hk") 
+
+summary(TGW_perm <- scanone(SynOpData, pheno.col = "BLUP_TGW", method="hk", n.perm=1000))#5% 3.14
+summary(GL_perm <- scanone(SynOpData, pheno.col = "BLUP_GL", method="hk", n.perm=1000))#5% 3.19
+summary(GW_perm <- scanone(SynOpData, pheno.col = "BLUP_GW", method="hk", n.perm=1000))#5% 3.10
+summary(HD_perm <- scanone(SynOpData, pheno.col = "BLUP_HD", method="hk", n.perm=1000))#5% 3.07
+
+LOD_BLUP <- cbind(TGW_BLUP, GL_BLUP, GW_BLUP, HD_BLUP) 
+
+#check cM 5A
+TGW_BLUP_cM <- scanone(SynOpData_cM, pheno.col = "BLUP_TGW", method = "hk")
+GL_BLUP_cM <- scanone(SynOpData_cM, pheno.col = "BLUP_GL", method = "hk")
+GW_BLUP_cM <- scanone(SynOpData_cM, pheno.col = "BLUP_GW", method = "hk") 
+HD_BLUP_cM <- scanone(SynOpData_cM, pheno.col = "BLUP_HD", method = "hk") 
+```
+
+### QTL Summary  
+
+```{r tidy LOD data and table, echo=FALSE}
+tidy_LOD <- LOD_BLUP %>% 
+  rownames_to_column(var = "marker") %>% 
+  rename(TGW_BLUP = lod.TGW_BLUP) %>% 
+  rename(GL_BLUP = lod.GL_BLUP) %>% 
+  rename(GW_BLUP = lod.GW_BLUP) %>% 
+  rename(HD_BLUP = lod.HD_BLUP) %>% 
+  pivot_longer(cols = ends_with("BLUP"), 
+               names_to = "Trait",
+               values_to = "LOD") %>% 
+  arrange(Trait, chr, pos) 
+
+#table
+LOD_BLUP %>% 
+  rownames_to_column(var = "marker") %>% 
+  rename(position = pos) %>% 
+  rename(TGW = lod.TGW_BLUP) %>% 
+  rename(GL = lod.GL_BLUP) %>% 
+  rename(GW = lod.GW_BLUP) %>% 
+  rename(HD  = lod.HD_BLUP) %>%
+  filter(TGW > 3 | GL > 3 | GW > 3 | HD > 3) %>% 
+  group_by(chr) %>% # respects grouping from dplyr
+  gt(rowname_col = "marker") %>% 
+  tab_spanner(
+    label = "SynOpDH LOD score", 
+    columns = 4:7
+  ) %>% 
+  fmt_number(
+    columns = 3:7,
+    decimals = 2
+  )  %>% 
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = cells_column_labels(everything())
+  ) %>% 
+  tab_footnote(
+    footnote = "Mbp for chr 5A", 
+    locations = cells_column_labels(
+      columns = 1 # note
+      )
+    ) %>% 
+  opt_table_lines(extent = "default") %>%
+  tab_options(
+    column_labels.border.top.color = "white",
+    column_labels.border.top.width = px(3),
+    column_labels.border.bottom.color = "black",
+    table_body.hlines.color = "white",
+    table.border.bottom.color = "white",
+    table.border.bottom.width = px(3)
+  ) %>% 
+  tab_style(
+    style = list(
+      cell_fill(color = scales::alpha("blue", 0.7)),
+      cell_text(color = "white", weight = "bold")
+      ),
+    locations = list(
+      cells_body(
+        columns = 4,
+        rows = `TGW` > 3.12
+      ),
+      cells_body(
+        columns = 5,
+        rows = `GL` > 3.08
+      ),
+      cells_body(
+        columns = 6,
+        rows = `GW` > 3.13
+      ),
+      cells_body(
+        columns = 7,
+        rows = `HD` > 3.09
+      ))) %>%
+  tab_options(table.align='left')
+```
+
+### Phenotype variation explained by QTL   
+`% var = 1 - 10^(-2 * LOD / n)`
+```{r variation explained, echo=FALSE}
+QTL2D_TGW = (1 - 10^((-2*5.22)/162))*100
+QTL2D_GL = (1 - 10^((-2*7.7)/162))*100
+QTL5A_TGW = (1 - 10^((-2*3.86)/162))*100
+QTL5A_GW = (1 - 10^((-2*16.81)/162))*100
+QTL6A_TGW = (1 - 10^((-2*3.18)/162))*100
+QTL6A_GL = (1 - 10^((-2*3.14)/162))*100
+
+tibble(QTL2D_TGW, QTL2D_GL, QTL5A_TGW, QTL5A_GW, QTL6A_TGW, QTL6A_GL) %>% 
+  pivot_longer(cols = starts_with("Q"), 
+               names_to = "QTL",
+               values_to = "% variation") %>%
+  gt()%>%
+  tab_options(table.align='left')
+```
+
+### QTL plots
+
+```{r QTL plot, echo = FALSE}
+#2D
+LOD_BLUP %>% 
+  pivot_longer(cols = starts_with("lod"), 
+               names_to = "Trait",
+               values_to = "LOD") %>% 
+  arrange(Trait, chr, pos) %>% 
+  filter(chr == "2D") %>% 
+  ggplot(aes(x = pos, y = LOD, color = Trait))+
+    geom_line() +
+    geom_hline(yintercept = 3.15, color = "black", linetype="dashed") + 
+    theme_classic() +
+    theme(text = element_text(size = 12, face = "bold"), legend.position = "bottom") + 
+    scale_color_manual(values = c("#ee8080", "darkolivegreen4", "#6CC2BD", "#d03161"), name = "Trait (BLUP)", 
+                       labels = c("GL", "GW", "HD", "TGW")) +
+    ggtitle("Chromosome 2D QTL") +
+    xlab("Chromosome 2D (cM)")
+#Figure 1A
+#5A
+#tiff("fig1A.tiff", width = 3000, height = 2000, res = 500)
+LOD_BLUP %>% 
+  pivot_longer(cols = starts_with("lod"), 
+               names_to = "Trait",
+               values_to = "LOD") %>% 
+  arrange(Trait, chr, pos) %>% 
+  filter(chr == "5A") %>% 
+  ggplot(aes(x = pos, y = LOD, color = Trait))+
+    geom_line() +
+    geom_hline(yintercept = 3.15, color = "grey", linetype="dashed") + 
+    geom_vline(xintercept = 250, color = "grey", linetype="dashed") +
+    theme_classic() +
+    theme(text = element_text(size = 12, face = "bold"), legend.position = "bottom") + 
+    scale_color_manual(values = c("gray48", "darkolivegreen4", "firebrick2", "#3564D4"), name = "Trait (BLUP)", 
+                       labels = c("GL", "GW", "HD", "TGW")) +
+    xlab("Chromosome 5A (Mbp)") +
+    annotate("text", x=380, y=5, label= "QTgw.cnl-5A", color = "#3564D4", fontface = 'italic')  +
+    annotate("text", x=600, y=11, label= "VRN-1", color = "firebrick2", fontface = 'italic') 
+
+#dev.off() 
+
+#6A
+LOD_BLUP %>% 
+  pivot_longer(cols = starts_with("lod"), 
+               names_to = "Trait",
+               values_to = "LOD") %>% 
+  arrange(Trait, chr, pos) %>% 
+  filter(chr == "6A") %>% 
+  ggplot(aes(x = pos, y = LOD, color = Trait))+
+    geom_line() +
+    geom_hline(yintercept = 3.15, color = "black", linetype="dashed") + 
+    theme_classic() +
+    theme(text = element_text(size = 12, face = "bold"), legend.position = "bottom") + 
+    scale_color_manual(values = c("#ee8080", "darkolivegreen4", "#6CC2BD", "#d03161"), name = "Trait (BLUP)", 
+                       labels = c("GL", "GW", "HD", "TGW")) +
+    ggtitle("Chromosome 6A QTL") +
+    xlab("Chromosome 6A (cM)")
+
+
+#svg(file="DHnoKASP.svg", plot=DH_noKASP, path = "/Users/ellataagen/Desktop/", width=10, height=7)
+```
+
+### Figure 1B  
+```{r figure 1B, echo=FALSE, message=FALSE}
+chr5Apheno <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_1/file_S1.5.csv", na = c("-", "NA"))
+
+chr5Apheno$chr5AS_status <- as.factor(chr5Apheno$chr5AS_status)
+chr5Apheno$KASP_341510829 <- as.factor(chr5Apheno$KASP_341510829)
+
+# New facet label names for traits
+supp.labs <- c("GL (mm)", "GW (mm)", "TGW (g)")
+names(supp.labs) <- c("GL", "GW", "TGW")
+
+
+subset <-  subset(chr5Apheno, select = -c(BLUP_HD))
+subset[complete.cases(subset), ] %>%  
+  rename("GL (mm)" = "BLUP_GL",
+         "GW (mm)" = "BLUP_GW",
+         "TGW (g)" = "BLUP_TGW") %>% 
+  pivot_longer(contains("("), 
+               names_to = "Trait",
+               values_to = "Trait_value"
+               ) %>% 
+  ggplot(aes(x = KASP_341510829, y = Trait_value, color = KASP_341510829)) +
+    geom_boxplot(outlier.shape = NA, na.rm = TRUE) +
+    geom_jitter(na.rm = TRUE, width = 0.25, shape = 1) +
+    facet_wrap(~Trait, ncol=3, scales = "free") +
+    scale_color_manual(values = c("#3564D4", "mediumaquamarine"))+
+    theme_classic() +
+    theme(text = element_text(size = 12, face = "bold"), legend.position = "bottom") +
+    labs(color = "QTgw.cnl-5A allele") +
+    xlab("") +
+    ylab("Trait value") 
+```
+
+### QTL physical postions 
+```{r QTL pos, echo=FALSE}
+
+pos <- tibble(QTL = c("QTgw.cnl-2D", "QTgw.cnl-5A", "QTgw.cnl-6A"), 'Flanking markers' = c("synopGBS929 - synopGBS579", "wmc705 - synopGBS284", "synopGBS42 - synopGBS1114"), cM = c("19.82 - 43.83", "0.1 - 4.49", "41.68 - 41.68"), 'RefSeqV1.0 flanking' = c("10,718,874 - 56,072,170", "290,035,203 - 487,755,214", "314,315,653 - 440,255,621"), 'Peak marker' = c("synopGBS1212", "synopGBS429", "synopGBS811"), 'RefSeqV1.0 peak' = c("35,003,633", "380,823,821", "358,607,834"))
+pos %>% 
+  gt() %>% 
+  tab_footnote(
+    footnote = "chromosome 2D and chromosome 6A markers reordered to match physical map order", 
+    locations = cells_column_labels(
+      columns = 1 
+      )
+    )%>%
+  tab_options(table.align='left')
+```
+
+### Test for interaction between 2D, 5A and 6A TGW QTL
+
+```{r qtl interaction, echo=FALSE, message=FALSE}
+SynOpDH_test <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_1/file_S1.1.csv", na = c("", NA))
+SynOpDH_test$SynOpDH_entry = as.factor(SynOpDH_test$SynOpDH_entry)
+SynOpDH_test$Environment = as.factor(SynOpDH_test$Environment)
+SynOpDH_test$QTL2D_synopGBS1212 = as.factor(SynOpDH_test$QTL2D_synopGBS1212)
+SynOpDH_test$QTL5A_wmc705 = as.factor(SynOpDH_test$QTL5A_wmc705)
+SynOpDH_test$QTL6A_synopGBS42 = as.factor(SynOpDH_test$QTL6A_synopGBS42)
+
+TGW_int <- lmer(TGW ~ (1|SynOpDH_entry) + (1|Environment) +  
+                  QTL2D_synopGBS1212 * QTL5A_wmc705 + 
+                  QTL6A_synopGBS42 * QTL5A_wmc705 +
+                  QTL2D_synopGBS1212 * QTL6A_synopGBS42, 
+                data = SynOpDH_test, REML = FALSE)
+Anova(TGW_int)
+```
+
+### Phenotypes across years, Table 1 
+```{r anova table 1, message=FALSE}
+cald16 <- SynOpDH_Phenotypes %>% 
+  filter(Location == "Caldwell" & Year == "2016") 
+summary(aov(TGW ~ QTL5A_wmc705, data = cald16))
+summary(aov(GL ~ QTL5A_wmc705, data = cald16))
+summary(aov(GW ~ QTL5A_wmc705, data = cald16))
+
+cald17 <- SynOpDH_Phenotypes %>% 
+  filter(Location == "Caldwell" & Year == "2017") 
+summary(aov(GL ~ QTL5A_wmc705, data = cald17))
+summary(aov(GW ~ QTL5A_wmc705, data = cald17))
+
+cald18A <- SynOpDH_Phenotypes %>% 
+  filter(Location == "Caldwell" & Year == "2018" & Rep == "A") 
+summary(aov(TGW ~ QTL5A_wmc705, data = cald18A))
+summary(aov(GL ~ QTL5A_wmc705, data = cald18A))
+summary(aov(GW ~ QTL5A_wmc705, data = cald18A))
+summary(aov(HD ~ QTL5A_wmc705, data = cald18A))
+
+cald18B <- SynOpDH_Phenotypes %>% 
+  filter(Location == "Caldwell" & Year == "2018" & Rep == "B") 
+summary(aov(TGW ~ QTL5A_wmc705, data = cald18B))
+summary(aov(GL ~ QTL5A_wmc705, data = cald18B))
+summary(aov(GW ~ QTL5A_wmc705, data = cald18B))
+summary(aov(HD ~ QTL5A_wmc705, data = cald18B))
+
+helf18A <- SynOpDH_Phenotypes %>% 
+  filter(Location == "Helfer" & Year == "2018" & Rep == "A") 
+summary(aov(TGW ~ QTL5A_wmc705, data = helf18A))
+summary(aov(GL ~ QTL5A_wmc705, data = helf18A))
+summary(aov(GW ~ QTL5A_wmc705, data = helf18A))
+summary(aov(HD ~ QTL5A_wmc705, data = helf18A))
+
+helf18B <- SynOpDH_Phenotypes %>% 
+  filter(Location == "Helfer" & Year == "2018" & Rep == "B") 
+summary(aov(TGW ~ QTL5A_wmc705, data = helf18B))
+summary(aov(GL ~ QTL5A_wmc705, data = helf18B))
+summary(aov(GW ~ QTL5A_wmc705, data = helf18B))
+summary(aov(HD ~ QTL5A_wmc705, data = helf18B))
+
+#BLUP
+summary(aov(BLUP_TGW ~ KASP_341510829, data = chr5Apheno))
+summary(aov(BLUP_GL ~ KASP_341510829, data = chr5Apheno))
+summary(aov(BLUP_GW ~ KASP_341510829, data = chr5Apheno))
+summary(aov(BLUP_HD ~ KASP_341510829, data = chr5Apheno))
+```
+
+
+```{r table1, message=FALSE, echo=FALSE}
+table1 <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_1/file_S1.6.csv", na = c(""))
+parent_check <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_1/file_S1.7.csv", na = c(""))
+
+table1 %>% 
+  rename("TGW (g)" = "TGW",
+         "GL (mm)" = "GL",
+         "GW (mm)" = "GW",
+         "HD (julian)" = "HD") %>% 
+  gt() %>% 
+  fmt_missing(
+    columns = 1:7,
+    missing_text = " "
+  ) %>% 
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = cells_column_labels(everything())
+  ) %>% 
+  opt_table_lines(extent = "default") %>%
+  tab_options(
+    column_labels.border.top.color = "white",
+    column_labels.border.top.width = px(3),
+    column_labels.border.bottom.color = "black",
+    table_body.hlines.color = "white",
+    table.border.bottom.color = "white",
+    table.border.bottom.width = px(3)
+  ) %>% 
+  tab_style(
+    style = cell_borders(
+      sides = "top",
+      color = "black",
+      weight = px(2)
+    ),
+    locations = cells_body(
+      columns = everything(),
+      rows = Year == "BLUP"
+    )
+  )  %>% 
+  tab_style(
+    style = cell_borders(
+      sides = "top",
+      color = "black",
+      weight = px(2)
+    ),
+    locations = cells_body(
+      columns = everything(),
+      rows = Year == "H^2"
+    )
+  ) %>% 
+  tab_style(
+    style = list(
+      cell_text(style = "italic")
+    ),
+    locations = cells_body(
+      columns = 3,
+      rows = everything()
+    )
+  ) %>% 
+  tab_header(title = md(""),
+    subtitle = md("**Table 1** Mean thousand grain weight (TGW), grain length (GL), grain width (GW), & heading date (HD) of SynOpDH entries with *QTgw.cnl-5A+* vs *QTgw.cnl-5A-* alleles")
+  ) %>% 
+  tab_options(
+    heading.subtitle.font.size = 16,
+    heading.align = "left",
+    table.border.top.color = "black",
+    column_labels.border.bottom.color = "black",
+    column_labels.border.bottom.width= px(3),
+  )%>%
+  tab_options(table.align='left')
+```
+
+### Parent and check entry averages across all observations
+```{r parent check, echo=FALSE}
+parent_check %>% 
+  rename("TGW (g)" = "TGW",
+         "GL (mm)" = "GL",
+         "GW (mm)" = "GW",
+         "HD (julian)" = "HD") %>% 
+  gt() %>% 
+  fmt_missing(
+    columns = 1:5,
+    missing_text = " "
+  )%>%
+  tab_options(table.align='left')
+```
+
+### Boxplots chromosome 5AS vs TGW
+
+```{r 5AS plot, echo = FALSE, warning=FALSE, message=FALSE}
+
+chr5Apheno$chr5AS_status <- as.factor(chr5Apheno$chr5AS_status)
+chr5Apheno$KASP_341510829 <- as.factor(chr5Apheno$KASP_341510829)
+
+chr5Apheno %>% 
+  pivot_longer(contains("BLUP"), 
+               names_to = "Trait",
+               values_to = "Trait_value"
+               ) %>% 
+  ggplot(aes(x = chr5AS_status, y = Trait_value, color = KASP_341510829)) +
+    geom_boxplot(outlier.shape = NA, na.rm = FALSE) +
+    geom_jitter(na.rm = FALSE, width = 0.25, shape = 1) +
+    scale_color_manual(values = c("#3564D4", "mediumaquamarine","orange"))+
+    theme_classic() +
+    theme(legend.position = "bottom", text = element_text(size=20)) +
+    facet_wrap(~Trait, nrow=2, scales = "free") +
+    ggtitle("SynOpDH Chr 5AS by Trait") +
+    labs(color = "QTgw.cnl-5A allele") +
+    xlab("Chromosome 5AS consensus") +
+    ylab("Trait") 
+```
+
+
+### SynOpDH chr5AS and QTgw.cnl-5A linkage disequilibrium   
+
+```{r ld, echo= FALSE}
+P_W <- chr5Apheno %>% 
+  filter(chr5AS_status == "present", KASP_341510829 == "W7984") 
+A_O <-chr5Apheno %>% 
+  filter(chr5AS_status == "absent", KASP_341510829 == "Opata")
+
+#Recombinants table
+P_W %>% 
+  rbind(A_O) %>% 
+  rename(TGW = BLUP_TGW) %>% 
+  rename(GL = BLUP_GL) %>% 
+  rename(GW = BLUP_GW) %>% 
+  rename(HD = BLUP_HD) %>%
+  rename(chr5AS = chr5AS_status) %>%
+  rename(QTgw.cnl_5A = KASP_341510829) %>%
+  gt() %>% 
+  tab_spanner(
+    label = "Recombinants", 
+    columns = 1:3
+  ) %>% 
+  fmt_number(
+    columns = 4:7,
+    decimals = 2
+  )  %>% 
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = cells_column_labels(everything())
+  ) %>%
+  tab_options(table.align='left')
+
+
+#Allele frequency
+total <- length(unique(chr5Apheno$Entry)) #including NAs
+Present <- chr5Apheno %>% 
+  filter(chr5AS_status == "present")
+Absent <- chr5Apheno %>% 
+  filter(chr5AS_status == "absent")
+P5AS <- length(Present$Entry)
+A5AS <- length(Absent$Entry)
+
+Opata <- chr5Apheno %>% 
+  filter(KASP_341510829 == "Opata")
+W7984 <- chr5Apheno %>% 
+  filter(KASP_341510829 == "W7984")
+OpataQTL <- length(Opata$Entry)
+W7984QTL <- length(W7984$Entry)
+Allele <- c("5AS, present", "5AS, absent", "QTgw.cnl-5A, Opata", "QTgw.cnl-5A, W7984")
+
+subset <- tibble(P5AS/total, A5AS/total, OpataQTL/total, W7984QTL/total) %>% 
+  pivot_longer(cols = ends_with("total"),
+               names_to = "drop",
+               values_to = "Allele frequency") %>% 
+  cbind(Allele) 
+subset <-  subset(subset, select = -c(drop))
+subset %>% 
+  relocate(Allele, .before = "Allele frequency") %>% 
+  gt(rowname_col = "Allele") %>% 
+  fmt_number(
+    columns = 2,
+    decimals = 2
+  )  %>% 
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = cells_column_labels(everything())
+  ) %>%
+  tab_options(table.align='left')
+
+
+#Haplotype freq and LD
+P_W <- length(P_W$Entry)
+A_O <- length(A_O$Entry)
+P_O <- chr5Apheno %>% 
+  filter(chr5AS_status == "present", KASP_341510829 == "Opata")
+P_O <- length(P_O$Entry)
+A_W <-chr5Apheno %>% 
+  filter(chr5AS_status == "absent", KASP_341510829 == "W7984")
+A_W <- length(A_W$Entry)
+
+#D = haplotype freq - allele freq * allele freq
+D = (P_O/total) - ((P5AS/total)*(OpataQTL/total))
+#r2 = D^2 / product of allele freqs
+r2 = (D^2)/((P5AS/total) * (A5AS/total) * (OpataQTL/total) * (W7984QTL/total))
+
+Haplotype <- c("present:Opata", "present:W7984", "absent:Opata", "absent:W7984", "coefficient of correlation")
+
+subset <- tibble(P_O/total, P_W/total, A_O/total, A_W/total, r2) %>% 
+  pivot_longer(cols = 1:5,
+               names_to = "drop",
+               values_to = "Haplotype frequency") %>% 
+  cbind(Haplotype)
+subset <-  subset(subset, select = -c(drop))
+subset %>% 
+  relocate(Haplotype, .before = "Haplotype frequency") %>% 
+  gt(rowname_col = "Haplotype") %>% 
+  fmt_number(
+    columns = 2,
+    decimals = 2
+  )  %>% 
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = list(
+      cells_column_labels(everything()),
+      cells_body(
+        columns = 2,
+        rows = "coefficient of correlation" 
+  )))%>%
+  tab_options(table.align='left')
+```
+
+### T-test: phenotype vs chromosome 5AS presence / absence OR QTL Opata / W7984 allele
+```{r t.test chr5A and QTL, echo=FALSE}
+   
+#T.test for chr5A and QTL
+HD_5ASt.test <- t_test(BLUP_HD ~ chr5AS_status, data = chr5Apheno) 
+HD_5ASt.test <- HD_5ASt.test$p
+TGW_5ASt.test <- t_test(BLUP_TGW ~ chr5AS_status, data = chr5Apheno) 
+TGW_5ASt.test <- TGW_5ASt.test$p
+GW_5ASt.test <- t_test(BLUP_GW ~ chr5AS_status, data = chr5Apheno) 
+GW_5ASt.test <- GW_5ASt.test$p
+GL_5ASt.test <- t_test(BLUP_GL ~ chr5AS_status, data = chr5Apheno) 
+GL_5ASt.test <- GL_5ASt.test$p
+
+HD_QTLt.test <- t_test(BLUP_HD ~ KASP_341510829, data = chr5Apheno) 
+HD_QTLt.test <- HD_QTLt.test$p
+TGW_QTLt.test <- t_test(BLUP_TGW ~ KASP_341510829, data = chr5Apheno) 
+TGW_QTLt.test <- TGW_QTLt.test$p
+GW_QTLt.test <- t_test(BLUP_GW ~ KASP_341510829, data = chr5Apheno) 
+GW_QTLt.test <- GW_QTLt.test$p
+GL_QTL5ASt.test <- t_test(BLUP_GL ~ KASP_341510829, data = chr5Apheno) 
+GL_QTL5ASt.test <- GL_QTL5ASt.test$p
+
+
+t.test <- c("TGW ~ 5AS", "TGW ~ QTL", "GL ~ 5AS", "GL ~ QTL", "GW ~ 5AS", "GW ~ QTL", "HD ~ 5AS", "HD ~ QTL")
+
+subset <- tibble(TGW_5ASt.test, TGW_QTLt.test, GL_5ASt.test, GL_QTL5ASt.test, GW_5ASt.test, GW_QTLt.test,HD_5ASt.test, HD_QTLt.test) %>% 
+  pivot_longer(cols = 1:8,
+               names_to = "drop",
+               values_to = "P value") %>% 
+  cbind(t.test) 
+subset <-  subset(subset, select = -c(drop))
+subset %>% 
+  relocate(t.test, .before = "P value") %>% 
+  gt() %>% 
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = list(
+      cells_column_labels(everything())))%>%
+  tab_options(table.align='left')%>% 
+  fmt_scientific(
+  columns = 2,
+  decimals = 3)
+```
+
