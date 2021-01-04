@@ -1875,6 +1875,8 @@ significant
 
 </table>
 
+![](script_S3_files/figure-gfm/all%20groups%20figures-1.png)<!-- -->
+
 **All group mean trait values**
 
 ``` r
