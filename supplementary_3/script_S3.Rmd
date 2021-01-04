@@ -1,0 +1,1328 @@
+---
+title: "script_S3: DPA analysis"
+output: github_document
+always_allow_html: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+All packages, data, and statistical analysis for reproducing SynOp HIF DPA results reported in Taagen et al. 2021. Please see `script_S3.Rmd` for full R script. 
+
+## 2019 field environmnet  
+
+A subset of ten HIF haplotypes (five *QTgw.cnl-5A-* and five *QTgw.cnl-5A+*) were selected for a days post anthesis (DPA) study that tracked fresh and dry grain weight (`FW`, `DW`) and grain width and grain length (`GW`, `GL`) development over 0, 4, 10, 16 and 22 DPA.  
+
+**Load packages:**  
+
+```{r load packages, message=FALSE}
+library(tidyverse) # R/tidyverse package version 1.3.0  
+library(knitr) # R/knitr package version 1.28 
+library(kableExtra) # R/kableExtra package version 1.1.0
+library(tibble) # R/tible package version 2.1.3
+library(lme4) # R/lme4 package version 1.1-26
+library(emmeans) # R/emmeans package version 1.4.6
+library(ggpubr) # R/ggpubr package version 0.2.5 
+```
+
+**Load data:**  
+```{r load field data, message=FALSE}
+#when public repo change  
+DPA <- read_csv("/Users/ellietaagen/Desktop/github/WheatCAP/SynOpHIF/DPA/Field phenotypes/DPA_tidy.csv", na = "")
+DPA$family =  as.factor(DPA$family)              
+DPA$entry =  as.factor(DPA$entry)
+DPA$genotype =  as.factor(DPA$genotype)    
+DPA$plot =  as.factor(DPA$plot)  
+DPA$tube =  as.factor(DPA$tube)
+DPA$DPA =  as.factor(DPA$DPA)  
+```
+
+**10 HIF haplotype entries**
+```{r table, echo=FALSE}
+DPA_table <- tribble(
+  ~Group, ~Entry, ~"QTgw.cnl-5A",
+  "1", "7-956-2-19-1-44", "W7984 (-)",
+  "1", "7-956-2-19-1-54", "Opata (+)",
+  "2", "7-956-2-50-1-50", "W7984 (-)",
+  "2", "7-956-2-50-1-01", "Opata (+)",
+  "3", "7-1201-10-36-2-18", "W7984 (-)",
+  "3", "7-1201-10-36-2-04", "Opata (+)",
+  "4", "7-1201-10-36-2-10", "W7984 (-)",
+  "4", "7-1201-10-36-2-25", "Opata (+)",
+  "5", "7-1201-10-45-2-23", "W7984 (-)",
+  "5", "7-1201-10-45-2-23", "Opata (+)",
+  )
+
+DPA_table %>% 
+  kable() %>% 
+  collapse_rows(columns = 1, valign = "top") %>% 
+  kable_styling(bootstrap_options = "striped", full_width = FALSE,  position = "left") %>% 
+  footnote(general = "QTgw.cnl-5A: QTL genotype (impact on trait)")
+```
+
+### Statistical analysis 
+Single-trait mixed models with a fixed interaction between `genotype` and `DPA`, and a random effect of `plot` replicate nested within `genotype`, and post hoc comparison of least-squares means for genotype and DPA performed within each model. To avoid repetition, the code is shown only for the first group. Please see the .Rmd file for all code.   
+
+**Group 1 W7984 - Opata contrast over 22 DPA**
+```{r group 1 stats}
+group1 <- DPA[DPA$family=="31", ]
+
+#grain width
+model1_GW <- lmer(GW ~ genotype*DPA + (1|plot:genotype), 
+                  data = group1)
+#summary(model1_GW) 
+GW_1 <- emmeans(model1_GW, pairwise ~ genotype|DPA)
+#bonferroni multiply p value by 5 (because 5 DPA multiple testing conditions, keeps alpha < 0.05)
+#Or bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+GW_1_df <- as.data.frame(summary(GW_1$contrasts))[,c('DPA', 'p.value')] 
+
+#grain length
+model1_GL <- lmer(GL ~ genotype*DPA + (1|plot:genotype), 
+                  data = group1)
+#summary(model1_GL) 
+GL_1 <- emmeans(model1_GL, pairwise ~ genotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+GL_1_df <- as.data.frame(summary(GL_1$contrasts))[,c('DPA', 'p.value')] 
+
+#fresh weight
+model1_FW <- lmer(FW ~ genotype*DPA + (1|plot:genotype), 
+                  data = group1)
+#summary(model1_FW) 
+FW_1 <- emmeans(model1_FW, pairwise ~ genotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+FW_1_df <- as.data.frame(summary(FW_1$contrasts))[,c('DPA', 'p.value')] 
+
+#dry weight
+model1_DW <- lmer(DW ~ genotype*DPA + (1|plot:genotype), 
+                  data = group1)
+#summary(model1_DW) 
+DW_1 <- emmeans(model1_DW, pairwise ~ genotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+DW_1_df <- as.data.frame(summary(DW_1$contrasts))[,c('DPA', 'p.value')] 
+
+summary <- GW_1_df %>% 
+  left_join(GL_1_df, by = "DPA") %>% 
+  mutate(p.value_GW = p.value.x, p.value.x = NULL, 
+         p.value_GL = p.value.y, p.value.y = NULL) %>% 
+  left_join(FW_1_df, by = "DPA") %>% 
+  mutate(p.value_FW = p.value, p.value = NULL) %>% 
+  left_join(DW_1_df, by = "DPA") %>% 
+  mutate(p.value_DW = p.value, p.value = NULL)
+  
+kable(summary, 
+        escape = F,
+        digits = 8,
+        format.args = list(scientific = FALSE)) %>% 
+  kable_styling(bootstrap_options = "striped", full_width = FALSE,  position = "left") %>% 
+  footnote(general = "Bonferroni correction for five DPA multiple testing condtions, 0.05/5, p-values less than 0.01 are significant") 
+```
+
+
+```{r group 1 figures, message= FALSE}
+p1 <- ggplot(data = group1, aes(x = DPA, y=GW, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("grain width (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold")) 
+
+p2 <- ggplot(data = group1, aes(x = DPA, y=GL, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("grain length (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold")) 
+
+p3 <- ggplot(data = group1, aes(x = DPA, y=FW, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("fresh weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"))
+
+p4 <- ggplot(data = group1, aes(x = DPA, y=DW, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("dry weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"))
+
+ggarrange(p1, p2, p3, p4, 
+          ncol = 4,
+          common.legend = TRUE) 
+```
+
+
+**Group 2 W7984 - Opata contrast over 22 DPA**
+```{r group 2 stats,echo=FALSE, message=FALSE}
+group2 <- DPA[DPA$family=="32", ]
+
+#grain width
+model2_GW <- lmer(GW ~ genotype*DPA + (1|plot:genotype), 
+                  data = group2)
+#summary(model2_GW) 
+GW_2 <- emmeans(model2_GW, pairwise ~ genotype|DPA)
+#bonferroni multiply p value by 5 (because 5 DPA multiple testing condtions, keeps alpha < 0.05)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+GW_2_df <- as.data.frame(summary(GW_2$contrasts))[,c('DPA', 'p.value')] 
+  #mutate(p.value_BF = p.value * 5) %>% 
+ 
+
+#grain length
+model2_GL <- lmer(GL ~ genotype*DPA + (1|plot:genotype), 
+                  data = group2)
+#summary(model2_GL) 
+GL_2 <- emmeans(model2_GL, pairwise ~ genotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+GL_2_df <- as.data.frame(summary(GL_2$contrasts))[,c('DPA', 'p.value')] 
+
+#fresh weight
+model2_FW <- lmer(FW ~ genotype*DPA + (1|plot:genotype), 
+                  data = group2)
+#summary(model2_FW) 
+FW_2 <- emmeans(model2_FW, pairwise ~ genotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+FW_2_df <- as.data.frame(summary(FW_2$contrasts))[,c('DPA', 'p.value')] 
+
+#dry weight
+model2_DW <- lmer(DW ~ genotype*DPA + (1|plot:genotype), 
+                  data = group2)
+#summary(model2_DW) 
+DW_2 <- emmeans(model2_DW, pairwise ~ genotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+DW_2_df <- as.data.frame(summary(DW_2$contrasts))[,c('DPA', 'p.value')] 
+
+summary <- GW_2_df %>% 
+  left_join(GL_2_df, by = "DPA") %>% 
+  mutate(p.value_GW = p.value.x, p.value.x = NULL, 
+         p.value_GL = p.value.y, p.value.y = NULL) %>% 
+  left_join(FW_2_df, by = "DPA") %>% 
+  mutate(p.value_FW = p.value, p.value = NULL) %>% 
+  left_join(DW_2_df, by = "DPA") %>% 
+  mutate(p.value_DW = p.value, p.value = NULL)
+  
+  
+  kable(summary, 
+        escape = F,
+        digits = 8,
+        format.args = list(scientific = FALSE)) %>% 
+  kable_styling(bootstrap_options = "striped", full_width = FALSE,  position = "left") %>% 
+  footnote(general = "Bonferroni correction for five DPA multiple testing condtions, 0.05/5, p-values less than 0.01 are significant") 
+```
+
+
+```{r group 2 figures, echo=FALSE, message= FALSE}
+p1 <- ggplot(data = group2, aes(x = DPA, y=GW, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("grain width (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold")) 
+
+p2 <- ggplot(data = group2, aes(x = DPA, y=GL, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("grain length (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold")) 
+
+p3 <- ggplot(data = group2, aes(x = DPA, y=FW, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("fresh weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"))
+
+p4 <- ggplot(data = group2, aes(x = DPA, y=DW, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("dry weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"))
+
+
+ggarrange(p1, p2, p3, p4, 
+          ncol = 4,
+          common.legend = TRUE) 
+```
+
+
+**Group 3 W7984 - Opata contrast over 22 DPA**
+```{r group 3 stats,echo=FALSE, message=FALSE}
+group3 <- DPA[DPA$family=="6.2", ]
+
+#grain width
+model3_GW <- lmer(GW ~ genotype*DPA + (1|plot:genotype), 
+                  data = group3)
+#summary(model3_GW) 
+GW_3 <- emmeans(model3_GW, pairwise ~ genotype|DPA)
+#bonferroni multiply p value by 5 (because 5 DPA multiple testing condtions, keeps alpha < 0.05)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+GW_3_df <- as.data.frame(summary(GW_3$contrasts))[,c('DPA', 'p.value')] 
+  #mutate(p.value_BF = p.value * 5) %>% 
+
+#grain length
+model3_GL <- lmer(GL ~ genotype*DPA + (1|plot:genotype), 
+                  data = group3)
+#summary(model3_GL) 
+GL_3 <- emmeans(model3_GL, pairwise ~ genotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+GL_3_df <- as.data.frame(summary(GL_3$contrasts))[,c('DPA', 'p.value')] 
+
+#fresh weight
+model3_FW <- lmer(FW ~ genotype*DPA + (1|plot:genotype), 
+                  data = group3)
+#summary(model3_FW) 
+FW_3 <- emmeans(model3_FW, pairwise ~ genotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+FW_3_df <- as.data.frame(summary(FW_3$contrasts))[,c('DPA', 'p.value')] 
+
+#dry weight
+model3_DW <- lmer(DW ~ genotype*DPA + (1|plot:genotype), 
+                  data = group3)
+#summary(model3_DW) 
+DW_3 <- emmeans(model3_DW, pairwise ~ genotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+DW_3_df <- as.data.frame(summary(DW_3$contrasts))[,c('DPA', 'p.value')] 
+
+summary <- GW_3_df %>% 
+  left_join(GL_3_df, by = "DPA") %>% 
+  mutate(p.value_GW = p.value.x, p.value.x = NULL, 
+         p.value_GL = p.value.y, p.value.y = NULL) %>% 
+  left_join(FW_3_df, by = "DPA") %>% 
+  mutate(p.value_FW = p.value, p.value = NULL) %>% 
+  left_join(DW_3_df, by = "DPA") %>% 
+  mutate(p.value_DW = p.value, p.value = NULL)
+  
+  
+  kable(summary, 
+        escape = F,
+        digits = 8,
+        format.args = list(scientific = FALSE)) %>% 
+  kable_styling(bootstrap_options = "striped", full_width = FALSE,  position = "left") %>% 
+  footnote(general = "Bonferroni correction for five DPA multiple testing condtions, 0.05/5, p-values less than 0.01 are significant") 
+```
+
+
+```{r group 3 figures, echo=FALSE, message= FALSE}
+p1 <- ggplot(data = group3, aes(x = DPA, y=GW, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("grain width (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold")) 
+
+p2 <- ggplot(data = group3, aes(x = DPA, y=GL, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("grain length (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold")) 
+
+p3 <- ggplot(data = group3, aes(x = DPA, y=FW, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("fresh weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"))
+
+p4 <- ggplot(data = group3, aes(x = DPA, y=DW, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("dry weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"))
+
+
+ggarrange(p1, p2, p3, p4, 
+          ncol = 4,
+          common.legend = TRUE) 
+```
+
+**Group 4 W7984 - Opata contrast over 22 DPA**  
+```{r group 4 stats,echo=FALSE, message=FALSE}
+group4 <- DPA[DPA$family=="6.2", ]
+
+#grain width
+model4_GW <- lmer(GW ~ genotype*DPA + (1|plot:genotype), 
+                  data = group4)
+#summary(model4_GW) 
+GW_4 <- emmeans(model4_GW, pairwise ~ genotype|DPA)
+#bonferroni multiply p value by 5 (because 5 DPA multiple testing condtions, keeps alpha < 0.05)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+GW_4_df <- as.data.frame(summary(GW_4$contrasts))[,c('DPA', 'p.value')] 
+  #mutate(p.value_BF = p.value * 5) %>% 
+
+#grain length
+model4_GL <- lmer(GL ~ genotype*DPA + (1|plot:genotype), 
+                  data = group4)
+#summary(model4_GL) 
+GL_4 <- emmeans(model4_GL, pairwise ~ genotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+GL_4_df <- as.data.frame(summary(GL_4$contrasts))[,c('DPA', 'p.value')] 
+
+#fresh weight
+model4_FW <- lmer(FW ~ genotype*DPA + (1|plot:genotype), 
+                  data = group4)
+#summary(model4_FW) 
+FW_4 <- emmeans(model4_FW, pairwise ~ genotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+FW_4_df <- as.data.frame(summary(FW_4$contrasts))[,c('DPA', 'p.value')] 
+
+#dry weight
+model4_DW <- lmer(DW ~ genotype*DPA + (1|plot:genotype), 
+                  data = group4)
+#summary(model4_DW) 
+DW_4 <- emmeans(model4_DW, pairwise ~ genotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+DW_4_df <- as.data.frame(summary(DW_4$contrasts))[,c('DPA', 'p.value')] 
+
+summary <- GW_4_df %>% 
+  left_join(GL_4_df, by = "DPA") %>% 
+  mutate(p.value_GW = p.value.x, p.value.x = NULL, 
+         p.value_GL = p.value.y, p.value.y = NULL) %>% 
+  left_join(FW_4_df, by = "DPA") %>% 
+  mutate(p.value_FW = p.value, p.value = NULL) %>% 
+  left_join(DW_4_df, by = "DPA") %>% 
+  mutate(p.value_DW = p.value, p.value = NULL)
+  
+  
+  kable(summary, 
+        escape = F,
+        digits = 8,
+        format.args = list(scientific = FALSE)) %>% 
+  kable_styling(bootstrap_options = "striped", full_width = FALSE,  position = "left") %>% 
+  footnote(general = "Bonferroni correction for five DPA multiple testing condtions, 0.05/5, p-values less than 0.01 are significant") 
+```
+
+
+```{r group 4 figures, echo=FALSE, message= FALSE}
+p1 <- ggplot(data = group4, aes(x = DPA, y=GW, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("grain width (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold")) 
+
+p2 <- ggplot(data = group4, aes(x = DPA, y=GL, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("grain length (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold")) 
+
+p3 <- ggplot(data = group4, aes(x = DPA, y=FW, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("fresh weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"))
+
+p4 <- ggplot(data = group4, aes(x = DPA, y=DW, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("dry weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"))
+
+
+ggarrange(p1, p2, p3, p4, 
+          ncol = 4,
+          common.legend = TRUE) 
+```
+
+
+**Group 5 W7984 - Opata contrast over 22 DPA**  
+```{r group 5 stats,echo=FALSE, message=FALSE}
+group5 <- DPA[DPA$family=="12", ]
+
+#grain width
+model5_GW <- lmer(GW ~ genotype*DPA + (1|plot:genotype), 
+                  data = group5)
+#summary(model5_GW) 
+GW_5 <- emmeans(model5_GW, pairwise ~ genotype|DPA)
+#bonferroni multiply p value by 5 (because 5 DPA multiple testing condtions, keeps alpha < 0.05)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+GW_5_df <- as.data.frame(summary(GW_5$contrasts))[,c('DPA', 'p.value')] 
+  #mutate(p.value_BF = p.value * 5) %>% 
+
+#grain length
+model5_GL <- lmer(GL ~ genotype*DPA + (1|plot:genotype), 
+                  data = group5)
+#summary(model5_GL) 
+GL_5 <- emmeans(model5_GL, pairwise ~ genotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+GL_5_df <- as.data.frame(summary(GL_5$contrasts))[,c('DPA', 'p.value')] 
+
+#fresh weight
+model5_FW <- lmer(FW ~ genotype*DPA + (1|plot:genotype), 
+                  data = group5)
+#summary(model5_FW) 
+FW_5 <- emmeans(model5_FW, pairwise ~ genotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+FW_5_df <- as.data.frame(summary(FW_5$contrasts))[,c('DPA', 'p.value')] 
+
+#dry weight
+model5_DW <- lmer(DW ~ genotype*DPA + (1|plot:genotype), 
+                  data = group5)
+#summary(model5_DW) 
+DW_5 <- emmeans(model5_DW, pairwise ~ genotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/5 = 0.01
+DW_5_df <- as.data.frame(summary(DW_5$contrasts))[,c('DPA', 'p.value')] 
+
+summary <- GW_5_df %>% 
+  left_join(GL_5_df, by = "DPA") %>% 
+  mutate(p.value_GW = p.value.x, p.value.x = NULL, 
+         p.value_GL = p.value.y, p.value.y = NULL) %>% 
+  left_join(FW_5_df, by = "DPA") %>% 
+  mutate(p.value_FW = p.value, p.value = NULL) %>% 
+  left_join(DW_5_df, by = "DPA") %>% 
+  mutate(p.value_DW = p.value, p.value = NULL)
+  
+  
+  kable(summary, 
+        escape = F,
+        digits = 8,
+        format.args = list(scientific = FALSE)) %>% 
+  kable_styling(bootstrap_options = "striped", full_width = FALSE,  position = "left") %>% 
+  footnote(general = "Bonferroni correction for five DPA multiple testing condtions, 0.05/5, p-values less than 0.01 are significant") 
+```
+
+
+```{r group 5 figures, echo=FALSE, message= FALSE}
+p1 <- ggplot(data = group5, aes(x = DPA, y=GW, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("grain width (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold")) 
+
+p2 <- ggplot(data = group5, aes(x = DPA, y=GL, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("grain length (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold")) 
+
+p3 <- ggplot(data = group5, aes(x = DPA, y=FW, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("fresh weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"))
+
+p4 <- ggplot(data = group5, aes(x = DPA, y=DW, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("dry weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"))
+
+
+ggarrange(p1, p2, p3, p4, 
+          ncol = 4,
+          common.legend = TRUE) 
+```
+
+**All groups W7984 - Opata contrast over 22 DPA**   
+
+```{r all group stats,echo=FALSE, message=FALSE}
+
+#grain width
+model_GW <- lmer(GW ~ genotype*DPA + family + (1|plot:genotype), 
+                  data = DPA)
+#summary(model_GW) 
+GW <- emmeans(model_GW, pairwise ~ genotype|DPA) #not worth adding family 
+#emmip(model_GW, family~genotype|DPA) #emphasizes effect of family order, parallel lines - difference between are consistent 
+#Anova(model_GW)
+#bonferroni multiply p value by 5 (because 5 DPA multiple testing condtions, keeps alpha < 0.05)
+#bonferroni for 5 DPA multiple testing condtions across 5 groups, 0.05/25 = 0.002
+GW_df <- as.data.frame(summary(GW$contrasts))[,c('DPA', 'p.value')] 
+  #mutate(p.value_BF = p.value * 5) %>% 
+
+#grain length
+model_GL <- lmer(GL ~ genotype*DPA + family + (1|plot:genotype), 
+                  data = DPA)
+#summary(model_GL) 
+GL <- emmeans(model_GL, pairwise ~ genotype|DPA)
+#bonferroni for 5 DPA multiple testing condtions across 5 groups, 0.05/25 = 0.002
+GL_df <- as.data.frame(summary(GL$contrasts))[,c('DPA', 'p.value')] 
+
+#fresh weight
+model_FW <- lmer(FW ~ genotype*DPA + family + (1|plot:genotype), 
+                  data = DPA)
+#summary(model_FW) 
+FW <- emmeans(model_FW, pairwise ~ genotype|DPA)
+#bonferroni for 5 DPA multiple testing condtions across 5 groups, 0.05/25 = 0.002
+FW_df <- as.data.frame(summary(FW$contrasts))[,c('DPA', 'p.value')] 
+
+#dry weight
+model_DW <- lmer(DW ~ genotype*DPA + family + (1|plot:genotype), 
+                  data = DPA)
+#summary(model_DW) 
+DW <- emmeans(model_DW, pairwise ~ genotype|DPA)
+#bonferroni for 5 DPA multiple testing condtions across 5 groups, 0.05/25 = 0.002
+DW_df <- as.data.frame(summary(DW$contrasts))[,c('DPA', 'p.value')] 
+
+summary <- GW_df %>% 
+  left_join(GL_df, by = "DPA") %>% 
+  mutate(p.value_GW = p.value.x, p.value.x = NULL, 
+         p.value_GL = p.value.y, p.value.y = NULL) %>% 
+  left_join(FW_df, by = "DPA") %>% 
+  mutate(p.value_FW = p.value, p.value = NULL) %>% 
+  left_join(DW_df, by = "DPA") %>% 
+  mutate(p.value_DW = p.value, p.value = NULL)
+  
+  
+  kable(summary, 
+        escape = F,
+        digits = 12,
+        format.args = list(scientific = FALSE)) %>% 
+  kable_styling(bootstrap_options = "striped", full_width = FALSE,  position = "left") %>% 
+  footnote(general = "Bonferroni correction for five DPA multiple testing condtions across 5 groups, 0.05/25, p-values less than 0.002 are significant") 
+```
+
+
+```{r all groups figures, echo=FALSE, message= FALSE}
+p1 <- ggplot(data = DPA, aes(x = DPA, y=GW, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.3, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("grain width (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold")) 
+
+p2 <- ggplot(data = DPA, aes(x = DPA, y=GL, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.3, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("grain length (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold")) 
+
+p3 <- ggplot(data = DPA, aes(x = DPA, y=FW, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.3, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("fresh weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"))
+
+p4 <- ggplot(data = DPA, aes(x = DPA, y=DW, color = genotype, group=genotype))+
+  geom_jitter(width = 0.1, alpha = 0.3, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("dry weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"))
+
+
+p5 <- ggarrange(p1, p2, p3, p4, 
+          ncol = 4,
+          common.legend = TRUE) 
+ggsave(file="fig3", plot=p5, width=10, height=7, device = "tiff", dpi = 700)
+```
+
+**All group mean trait values**  
+
+```{r all groups mean, message= FALSE}
+W7984_10 <- DPA %>% 
+  filter(genotype=="W7984", DPA == 10) 
+Opata_10 <- DPA %>% 
+  filter(genotype=="Opata", DPA == 10) 
+W7984_16 <- DPA %>% 
+  filter(genotype=="W7984", DPA == 16) 
+Opata_16 <- DPA %>% 
+  filter(genotype=="Opata", DPA == 16) 
+
+GL_opata <- mean(Opata_10$GL, na.rm = TRUE)
+GL_W7984 <- mean(W7984_10$GL, na.rm = TRUE)
+GW_opata <- mean(Opata_10$GW, na.rm = TRUE)
+GW_W7984 <- mean(W7984_10$GW, na.rm = TRUE)
+FW_opata <- mean(Opata_10$FW, na.rm = TRUE)
+FW_W7984 <- mean(W7984_10$FW, na.rm = TRUE)
+DW_opata <- mean(Opata_16$FW, na.rm = TRUE)
+DW_W7984 <- mean(W7984_16$FW, na.rm = TRUE) 
+
+GL_opata/GL_W7984
+GW_opata/GW_W7984
+FW_opata/FW_W7984
+DW_opata/DW_W7984
+```
+
+## 2020 greenhouse environment 
+A subset of four *QTgw.cnl-5A* HIF haplotypes were selected to validate a days post anthesis (DPA) study in a greenhouse environment. The four *QTgw.cnl-5A* haplotypes were also used for the RNA-seq experiment, see table below. For plants grown in the greenhouse we measured fresh and dry grain weight (`FW`, `DW`) and grain width and grain length (`GW`, `GL`) development over 0, 4, 10, 16, 22 and 28 DPA, and senescence.  
+
+**Load data:**  
+```{r GH load data, message=FALSE}
+#when public repo change  
+DPA <- read.csv("/Users/ellietaagen/Desktop/github/WheatCAP/SynOpHIF/DPA/Greenhouse phenotypes/DPA_tidy_GH.csv")
+DPA$family <- as.factor(DPA$family)
+DPA$entry <- as.factor(DPA$entry)
+DPA$haplotype <- as.factor(DPA$haplotype)
+DPA$gh_stake <- as.factor(DPA$gh_stake)
+DPA$tube <- as.factor(DPA$tube)
+#DPA$DPA <- as.factor(DPA$DPA)
+DPA$DPA <- ordered(DPA$DPA, levels = c("0", "4", "10", "16", "22", "28", "sen."))
+```
+
+**SynOpHIF *QTgw.cnl-5A* Haplotype DPA entries** 
+```{r haplotype GH, echo=FALSE}
+DPA_table <- tribble(
+  ~Entry, ~"QTgw.cnl-5A haplotype",
+  "7-956-2-19-1-31-03", "Opata (+)",
+  "7-956-2-19-1-44", "W7984 (-)",
+  "7-956-2-19-1-31-05", "Crossover one, O:W (+)",
+  "7-956-2-12-1-69-07", "Crossover two, W:O:W (+)",
+)
+
+DPA_table %>% 
+  kable() %>% 
+  collapse_rows(columns = 1, valign = "top") %>% 
+  kable_styling(bootstrap_options = "striped", full_width = FALSE,  position = "left") %>% 
+  footnote(general = "QTgw.cnl-5A haplotype (impact on trait)")
+```
+
+**DPA trait means by haplotype**  
+```{r trait means, echo=FALSE}
+DPA %>% 
+  group_by(DPA, haplotype) %>% 
+  summarise(meanGW = mean(GW),
+            meanGL = mean(GL),
+            meanFW = mean(FW), 
+            meanDW = mean(DW)) %>% 
+  kable()%>% 
+  collapse_rows(columns = 1, valign = "top") %>% 
+  kable_styling(bootstrap_options = "striped", full_width = FALSE,  position = "left") %>% 
+  footnote(general = "mean of 10 samples of 10 grains per haplotype DPA, and sen. FW and DW are the same observation")
+```
+
+### GH statistical analysis 
+Single-trait mixed models with a fixed interaction between `haplotype` and `DPA`, and a random effect of `tube` nested within `haplotype`, and post hoc comparison of least-squares means for haplotype and DPA performed within each model. For equations please see .Rmd file.  
+
+**Opata vs W7984 haplotype contrasts over 28 DPA, and senescence**
+```{r Opata vs W7984 entry stats, echo= FALSE, message=FALSE}
+#contrast Opata and W7984
+group1 <- DPA %>% 
+  filter(haplotype == "Opata" | haplotype == "W7984")
+
+#grain width
+model1_GW <- lmer(GW ~ haplotype*DPA + (1|tube:haplotype), #why 126 DF? why doesn't tube work anymore?
+                  data = group1)
+#summary(model1_GW) 
+GW_1 <- emmeans(model1_GW, pairwise ~ haplotype|DPA)
+#bonferroni multiply p value by 5 (because 5 DPA multiple testing condtions, keeps alpha < 0.05)
+#bonferroni for 7 DPA multiple testing condtions, 0.05/7 = 0.007142857
+GW_1_df <- as.data.frame(summary(GW_1$contrasts))[,c('DPA', 'p.value')] #%>% mutate(p.value_BF = p.value * 7)
+ 
+
+#grain length
+model1_GL <- lmer(GL ~ haplotype*DPA + (1|tube:haplotype), 
+                  data = group1)
+#summary(model1_GL) 
+GL_1 <- emmeans(model1_GL, pairwise ~ haplotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/7 = 0.007142857
+GL_1_df <- as.data.frame(summary(GL_1$contrasts))[,c('DPA', 'p.value')]  #%>% mutate(p.value_BF = p.value * 7)
+
+#fresh weight
+model1_FW <- lmer(FW ~ haplotype*DPA + (1|tube:haplotype), 
+                  data = group1)
+#summary(model1_FW) 
+FW_1 <- emmeans(model1_FW, pairwise ~ haplotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/7 = 0.007142857
+FW_1_df <- as.data.frame(summary(FW_1$contrasts))[,c('DPA', 'p.value')] #%>% mutate(p.value_BF = p.value * 7)
+
+#dry weight
+model1_DW <- lmer(DW ~ haplotype*DPA + (1|tube:haplotype), 
+                  data = group1)
+#summary(model1_DW) 
+DW_1 <- emmeans(model1_DW, pairwise ~ haplotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/7 = 0.007142857
+DW_1_df <- as.data.frame(summary(DW_1$contrasts))[,c('DPA', 'p.value')] #%>% mutate(p.value_BF = p.value * 7)
+
+summary <- GW_1_df %>% 
+  left_join(GL_1_df, by = "DPA") %>% 
+  mutate(p.value_GW = p.value.x, p.value.x = NULL, 
+         p.value_GL = p.value.y, p.value.y = NULL) %>% 
+  left_join(FW_1_df, by = "DPA") %>% 
+  mutate(p.value_FW = p.value, p.value = NULL) %>% 
+  left_join(DW_1_df, by = "DPA") %>% 
+  mutate(p.value_DW = p.value, p.value = NULL) 
+  
+  
+kable(summary, 
+        escape = F,
+        digits = 8,
+        format.args = list(scientific = FALSE)) %>% 
+  kable_styling(bootstrap_options = "striped", full_width = FALSE,  position = "left") %>% 
+  footnote(general = "Bonferroni correction for 7 DPA multiple testing condtions, 0.05/7, p-values less than 0.007 are significant") 
+```
+
+```{r O vs W figures, echo=FALSE, message= FALSE, warning = FALSE}
+p1 <- ggplot(data = group1, aes(x = DPA, y=GW, color = haplotype, group=haplotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("grain width (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5)) 
+
+p2 <- ggplot(data = group1, aes(x = DPA, y=GL, color = haplotype, group=haplotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("grain length (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5)) 
+
+p3 <- ggplot(data = group1, aes(x = DPA, y=FW, color = haplotype, group=haplotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("fresh weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+p4 <- ggplot(data = group1, aes(x = DPA, y=DW, color = haplotype, group=haplotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("Opata (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("dry weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+
+ggarrange(p1, p2, p3, p4, 
+          ncol = 4,
+          common.legend = TRUE) 
+```
+
+**CO1 vs W7984 haplotype contrasts over 28 DPA, and senescence**
+
+```{r CO1 vs W7984 entry stats, echo= FALSE, message=FALSE}
+#contrast CO1 and W7984
+group2 <- DPA %>% 
+  filter(haplotype== "CO1" | haplotype== "W7984")
+
+#grain width
+model1_GW <- lmer(GW ~ haplotype*DPA + (1|tube:haplotype), 
+                  data = group2)
+#summary(model1_GW) 
+GW_1 <- emmeans(model1_GW, pairwise ~ haplotype|DPA)
+#bonferroni multiply p value by 5 (because 5 DPA multiple testing condtions, keeps alpha < 0.05)
+#bonferroni for 7 DPA multiple testing condtions, 0.05/7 = 0.007142857
+GW_1_df <- as.data.frame(summary(GW_1$contrasts))[,c('DPA', 'p.value')] #%>% mutate(p.value_BF = p.value * 7)
+ 
+
+#grain length
+model1_GL <- lmer(GL ~ haplotype*DPA + (1|tube:haplotype), 
+                  data = group2)
+#summary(model1_GL) 
+GL_1 <- emmeans(model1_GL, pairwise ~ haplotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/7 = 0.007142857
+GL_1_df <- as.data.frame(summary(GL_1$contrasts))[,c('DPA', 'p.value')]  #%>% mutate(p.value_BF = p.value * 7)
+
+#fresh weight
+model1_FW <- lmer(FW ~ haplotype*DPA + (1|tube:haplotype), 
+                  data = group2)
+#summary(model1_FW) 
+FW_1 <- emmeans(model1_FW, pairwise ~ haplotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/7 = 0.007142857
+FW_1_df <- as.data.frame(summary(FW_1$contrasts))[,c('DPA', 'p.value')] #%>% mutate(p.value_BF = p.value * 7)
+
+#dry weight
+model1_DW <- lmer(DW ~ haplotype*DPA + (1|tube:haplotype), 
+                  data = group2)
+#summary(model1_DW) 
+DW_1 <- emmeans(model1_DW, pairwise ~ haplotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/7 = 0.007142857
+DW_1_df <- as.data.frame(summary(DW_1$contrasts))[,c('DPA', 'p.value')] #%>% mutate(p.value_BF = p.value * 7)
+
+summary <- GW_1_df %>% 
+  left_join(GL_1_df, by = "DPA") %>% 
+  mutate(p.value_GW = p.value.x, p.value.x = NULL, 
+         p.value_GL = p.value.y, p.value.y = NULL) %>% 
+  left_join(FW_1_df, by = "DPA") %>% 
+  mutate(p.value_FW = p.value, p.value = NULL) %>% 
+  left_join(DW_1_df, by = "DPA") %>% 
+  mutate(p.value_DW = p.value, p.value = NULL) 
+  
+kable(summary, 
+        escape = F,
+        digits = 8,
+        format.args = list(scientific = FALSE)) %>% 
+  kable_styling(bootstrap_options = "striped", full_width = FALSE,  position = "left") %>% 
+  footnote(general = "Bonferroni correction for 7 DPA multiple testing condtions, 0.05/7, p-values less than 0.007 are significant") 
+```
+
+```{r CO1 vs W figures, echo=FALSE, message= FALSE, warning = FALSE}
+p1 <- ggplot(data = group2, aes(x = DPA, y=GW, color = haplotype, group=haplotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("CO1 (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("grain width (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5)) 
+
+p2 <- ggplot(data = group2, aes(x = DPA, y=GL, color = haplotype, group=haplotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("CO1 (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("grain length (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5)) 
+
+p3 <- ggplot(data = group2, aes(x = DPA, y=FW, color = haplotype, group=haplotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("CO1 (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("fresh weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+p4 <- ggplot(data = group2, aes(x = DPA, y=DW, color = haplotype, group=haplotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("CO1 (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("dry weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+
+ggarrange(p1, p2, p3, p4, 
+          ncol = 4,
+          common.legend = TRUE) 
+```
+
+**CO2 vs W7984 haplotype contrasts over 28 DPA, and senescence** 
+
+```{r CO2 vs W7984 entry stats, echo= FALSE, message=FALSE}
+#contrast CO2 and W7984
+group3 <- DPA %>% 
+  filter(haplotype== "CO2" | haplotype== "W7984")
+
+#grain width
+model1_GW <- lmer(GW ~ haplotype*DPA + (1|tube:haplotype), 
+                  data = group3)
+#summary(model1_GW) 
+GW_1 <- emmeans(model1_GW, pairwise ~ haplotype|DPA)
+#bonferroni multiply p value by 5 (because 5 DPA multiple testing condtions, keeps alpha < 0.05)
+#bonferroni for 7 DPA multiple testing condtions, 0.05/7 = 0.007142857
+GW_1_df <- as.data.frame(summary(GW_1$contrasts))[,c('DPA', 'p.value')] #%>% mutate(p.value_BF = p.value * 7)
+ 
+
+#grain length
+model1_GL <- lmer(GL ~ haplotype*DPA + (1|tube:haplotype), 
+                  data = group3)
+#summary(model1_GL) 
+GL_1 <- emmeans(model1_GL, pairwise ~ haplotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/7 = 0.007142857
+GL_1_df <- as.data.frame(summary(GL_1$contrasts))[,c('DPA', 'p.value')]  #%>% mutate(p.value_BF = p.value * 7)
+
+#fresh weight
+model1_FW <- lmer(FW ~ haplotype*DPA + (1|tube:haplotype), 
+                  data = group3)
+#summary(model1_FW) 
+FW_1 <- emmeans(model1_FW, pairwise ~ haplotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/7 = 0.007142857
+FW_1_df <- as.data.frame(summary(FW_1$contrasts))[,c('DPA', 'p.value')] #%>% mutate(p.value_BF = p.value * 7)
+
+#dry weight
+model1_DW <- lmer(DW ~ haplotype*DPA + (1|tube:haplotype), 
+                  data = group3)
+#summary(model1_DW) 
+DW_1 <- emmeans(model1_DW, pairwise ~ haplotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/7 = 0.007142857
+DW_1_df <- as.data.frame(summary(DW_1$contrasts))[,c('DPA', 'p.value')] #%>% mutate(p.value_BF = p.value * 7)
+
+summary <- GW_1_df %>% 
+  left_join(GL_1_df, by = "DPA") %>% 
+  mutate(p.value_GW = p.value.x, p.value.x = NULL, 
+         p.value_GL = p.value.y, p.value.y = NULL) %>% 
+  left_join(FW_1_df, by = "DPA") %>% 
+  mutate(p.value_FW = p.value, p.value = NULL) %>% 
+  left_join(DW_1_df, by = "DPA") %>% 
+  mutate(p.value_DW = p.value, p.value = NULL) 
+
+kable(summary, 
+        escape = F,
+        digits = 8,
+        format.args = list(scientific = FALSE)) %>% 
+  kable_styling(bootstrap_options = "striped", full_width = FALSE,  position = "left") %>% 
+  footnote(general = "Bonferroni correction for 7 DPA multiple testing condtions, 0.05/7, p-values less than 0.007 are significant") 
+```
+
+```{r CO2 vs W7984 figures, echo=FALSE, message= FALSE, warning = FALSE}
+p1 <- ggplot(data = group3, aes(x = DPA, y=GW, color = haplotype, group=haplotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("CO2 (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("grain width (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5)) 
+
+p2 <- ggplot(data = group3, aes(x = DPA, y=GL, color = haplotype, group=haplotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("CO2 (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("grain length (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5)) 
+
+p3 <- ggplot(data = group3, aes(x = DPA, y=FW, color = haplotype, group=haplotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("CO2 (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("fresh weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+p4 <- ggplot(data = group3, aes(x = DPA, y=DW, color = haplotype, group=haplotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("CO2 (+)", "W7984 (-)"))+
+  theme_classic2()+
+  ylab("dry weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+
+ggarrange(p1, p2, p3, p4, 
+          ncol = 4,
+          common.legend = TRUE) 
+```
+
+**CO1 vs CO2 haplotype contrasts over 28 DPA, and senescence** 
+
+```{r CO1 vs CO2 entry stats, echo= FALSE, message=FALSE}
+#contrast CO1 vs CO2
+group4 <- DPA %>% 
+  filter(haplotype== "CO1" | haplotype== "CO2")
+
+#grain width
+model1_GW <- lmer(GW ~ haplotype*DPA + (1|tube:haplotype), 
+                  data = group4)
+#summary(model1_GW) 
+GW_1 <- emmeans(model1_GW, pairwise ~ haplotype|DPA)
+#bonferroni multiply p value by 5 (because 5 DPA multiple testing condtions, keeps alpha < 0.05)
+#bonferroni for 7 DPA multiple testing condtions, 0.05/7 = 0.007142857
+GW_1_df <- as.data.frame(summary(GW_1$contrasts))[,c('DPA', 'p.value')] #%>% mutate(p.value_BF = p.value * 7)
+ 
+
+#grain length
+model1_GL <- lmer(GL ~ haplotype*DPA + (1|tube:haplotype), 
+                  data = group4)
+#summary(model1_GL) 
+GL_1 <- emmeans(model1_GL, pairwise ~ haplotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/7 = 0.007142857
+GL_1_df <- as.data.frame(summary(GL_1$contrasts))[,c('DPA', 'p.value')]  #%>% mutate(p.value_BF = p.value * 7)
+
+#fresh weight
+model1_FW <- lmer(FW ~ haplotype*DPA + (1|tube:haplotype), 
+                  data = group4)
+#summary(model1_FW) 
+FW_1 <- emmeans(model1_FW, pairwise ~ haplotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/7 = 0.007142857
+FW_1_df <- as.data.frame(summary(FW_1$contrasts))[,c('DPA', 'p.value')] #%>% mutate(p.value_BF = p.value * 7)
+
+#dry weight
+model1_DW <- lmer(DW ~ haplotype*DPA + (1|tube:haplotype), 
+                  data = group4)
+#summary(model1_DW) 
+DW_1 <- emmeans(model1_DW, pairwise ~ haplotype|DPA)
+#bonferroni for five DPA multiple testing condtions, 0.05/7 = 0.007142857
+DW_1_df <- as.data.frame(summary(DW_1$contrasts))[,c('DPA', 'p.value')] #%>% mutate(p.value_BF = p.value * 7)
+
+summary <- GW_1_df %>% 
+  left_join(GL_1_df, by = "DPA") %>% 
+  mutate(p.value_GW = p.value.x, p.value.x = NULL, 
+         p.value_GL = p.value.y, p.value.y = NULL) %>% 
+  left_join(FW_1_df, by = "DPA") %>% 
+  mutate(p.value_FW = p.value, p.value = NULL) %>% 
+  left_join(DW_1_df, by = "DPA") %>% 
+  mutate(p.value_DW = p.value, p.value = NULL) 
+  
+kable(summary, 
+        escape = F,
+        digits = 8,
+        format.args = list(scientific = FALSE)) %>% 
+  kable_styling(bootstrap_options = "striped", full_width = FALSE,  position = "left") %>% 
+  footnote(general = "Bonferroni correction for 7 DPA multiple testing condtions, 0.05/7, p-values less than 0.007 are significant") 
+```
+
+```{r CO1 vs CO2 figures, echo=FALSE, message= FALSE, warning = FALSE}
+p1 <- ggplot(data = group4, aes(x = DPA, y=GW, color = haplotype, group=haplotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("CO1 (+)", "CO2"))+
+  theme_classic2()+
+  ylab("grain width (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5)) 
+
+p2 <- ggplot(data = group4, aes(x = DPA, y=GL, color = haplotype, group=haplotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("CO1 (+)", "CO2"))+
+  theme_classic2()+
+  ylab("grain length (mm)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5)) 
+
+p3 <- ggplot(data = group4, aes(x = DPA, y=FW, color = haplotype, group=haplotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("CO1 (+)", "CO2"))+
+  theme_classic2()+
+  ylab("fresh weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+p4 <- ggplot(data = group4, aes(x = DPA, y=DW, color = haplotype, group=haplotype))+
+  geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
+  geom_line(stat="summary", na.rm = TRUE)+
+  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+                     labels = c("CO1 (+)", "CO2"))+
+  theme_classic2()+
+  ylab("dry weight (g)")+
+  labs(color = "QTgw.cnl-5A") +
+  theme(text = element_text(size=12), 
+        axis.title.x = element_text(face="bold"), 
+        axis.title.y = element_text(face="bold"),
+        legend.title = element_text(face="bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+
+ggarrange(p1, p2, p3, p4, 
+          ncol = 4,
+          common.legend = TRUE) 
+```
