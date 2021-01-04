@@ -1,0 +1,24 @@
+﻿Triticum aestivum (RefSeq V1.1),chr RefSeq V1.0,chr RefSeq V2.0,DE 4,DE 8,GO terms,Arabidopsis thaliana ,Oryza sativa
+TraesCS1A02G103900,1AS,5AS,3.99E-08,1.07E-07,regulation of cell size (GO:0008361),"HAIKU2 (IKU2), regulator of seed size",HAIKU2
+,,,,,plant-type cell wall organization (GO:0009664),,
+,,,,,multidimensional cell growth (GO:0009825),,
+,,,,,epidermal cell differentiation (GO:0009913),,
+TraesCS5A02G025900,5AS,5AS,5.59E-30,1.34E-17,post-embryonic development (GO:0009791),"YAB2, abaxial cell fate ",OsYAB6
+,,,,,cell differentiation (GO:0030154),,
+,,,,,reproductive structure development (GO:0048608),,
+TraesCS5A02G030300,5AS,5AS,2.25E-09,1.70E-07,brassinosteroid mediated signaling pathway (GO:0009742),"BSL2 and BSL3, brassinosteroid-insensitive suppressor family","OsPPKL3, negative regulator of grain length "
+,,,,,,,
+TraesCS5A02G037100,5AS,5AS,0.000499034,,stamen development (GO:0048443),"PID, establishment of bilateral symmetry","BIF2, organogenesis during inflorescence"
+,,,,,regulation of cell size (GO:0008361) ,,
+,,,,,cell projection (GO:0042995),,
+,,,,,auxin-activated signaling pathway (GO:0009734),,
+TraesCS5A02G038300,5AS,5AS,1.43E-16,5.75E-10,auxin-activated signaling pathway (GO:0009734),"ARF6, regulator of  flower development / maturation","OsARF25, regulator of grain size"
+,,,,,flower development (GO:0009908),,
+TraesCS5A02G103800,5AS,5AS,6.54E-11,7.61E-07,auxin metabolic process (GO:0009850),"RGLG1 and RGLG2, regulator of apical dominance",
+,,,,,cytokinin metabolic process (GO:0009690),,
+TraesCS5A02G106400,5AS,5AS,4.69E-12,4.93E-07,diacylglycerol kinase activity (GO:0004143),"DGK2, pollen and seed development",
+,,,,,intracellular anatomical structure (GO:0005622),,
+TraesCS5A02G107800,5AS,5AS,1.37E-14,9.33E-14,response to ethylene (GO:0009723),"VTC2 and VTC5, ascorbate biosynthesis","OsGGP, biomass production "
+,,,,,response to auxin (GO:0009733),,
+TraesCS5A02G110600,5AS,5AS,1.07E-13,4.18E-09,phragmoplast (GO:0009524),"AUG6, mitotic and meiotic cell division","Os02g0329300, AUGMIN subunit 6"
+,,,,,spindle assembly (GO:0051225),,
