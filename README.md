@@ -55,7 +55,13 @@ Data, analysis, and scripts for reviewing or reproducing results presented in Ta
 
 * **file_S2.12.xlsx**, HIF groups, with and without chr 5AS primers  
 
-### [DPA analysis, supplementary_3]()
+### [DPA analysis, supplementary_3](https://github.com/etaagen/Taagen_2021_TPG/tree/main/supplementary_3)  
+
+* **script_S3.md and script_S3.Rmd**, DPA analysis  
+
+* **file_S3.1.csv**, 2019 field HIF DPA tidy data  
+
+* **file_S3.2.csv**, 2020 greenhouse HIF DPA tidy data  
 
 ### [RNA-seq analysis, supplementary_4](https://github.com/etaagen/Taagen_2021_TPG/tree/main/supplementary_4)  
 
