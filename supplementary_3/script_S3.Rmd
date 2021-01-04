@@ -31,7 +31,7 @@ library(ggpubr) # R/ggpubr package version 0.2.5
 **Load data:**  
 ```{r load field data, message=FALSE}
 #when public repo change  
-DPA <- read_csv("/Users/ellietaagen/Desktop/github/WheatCAP/SynOpHIF/DPA/Field phenotypes/DPA_tidy.csv", na = "")
+DPA <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_3/file_S3.1.csv", na = "")
 DPA$family =  as.factor(DPA$family)              
 DPA$entry =  as.factor(DPA$entry)
 DPA$genotype =  as.factor(DPA$genotype)    
@@ -799,7 +799,7 @@ A subset of four *QTgw.cnl-5A* HIF haplotypes were selected to validate a days p
 **Load data:**  
 ```{r GH load data, message=FALSE}
 #when public repo change  
-DPA <- read.csv("/Users/ellietaagen/Desktop/github/WheatCAP/SynOpHIF/DPA/Greenhouse phenotypes/DPA_tidy_GH.csv")
+DPA <- read.csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_3/file_S3.2.csv")
 DPA$family <- as.factor(DPA$family)
 DPA$entry <- as.factor(DPA$entry)
 DPA$haplotype <- as.factor(DPA$haplotype)
