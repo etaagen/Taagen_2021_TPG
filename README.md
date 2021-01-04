@@ -1,7 +1,7 @@
 # Taagen et al., 2021, The Plant Genome 
 
 ### Reproducibility index  
-Data, analysis and scripts for reproducing results presented in Taagen et al., 2021. To view the final analysis output, please see the **.md** files. To view the entire script or download and reproduce analysis, please see the **.Rmd** files. All of the data is accessible within .Rmd file via GitHub without downloading. Please cite and/or credit (*manuscirpt currently in review*).
+Data, analysis, and scripts for reproducing results presented in Taagen et al., 2021. To view the final analysis output, please see the **.md** files. To view the entire script or download and reproduce analysis in R or command line, please see the **.Rmd** files. All of the data is accessible within .Rmd file via GitHub (no need to download). ** Please cite and/or credit: ** (*manuscirpt currently in review*).
 
 ### [SynOpDH analysis, supplementary_1](https://github.com/etaagen/Taagen_2021_TPG/tree/main/supplementary_1) 
 
@@ -57,4 +57,44 @@ Data, analysis and scripts for reproducing results presented in Taagen et al., 2
 
 ### [DPA analysis, supplementary_3]()
 
-### [RNA-seq analysis, supplementary_4](https://github.com/etaagen/Taagen_2021_TPG/tree/main/supplementary_4)
+### [RNA-seq analysis, supplementary_4](https://github.com/etaagen/Taagen_2021_TPG/tree/main/supplementary_4)  
+
+* **script_S4.md and script_S4.Rmd**, RNA-seq analysis  
+
+* **file_S4.01.csv**, Table 3, HIF haplotypes for RNA-seq  
+
+* **file_S4.02.csv and file_S4.03.csv**, log.out.final HC and LC annotation, respectively  
+
+* **file_S4.04.csv**, Raw read count, RefSeq v1.1 HC annotation  
+
+* **file_S4.05.csv**, HC gene name and positions  
+
+* **file_S4.06.csv**, DESeq2 and ComBat-seq metadata  
+
+* **file_S4.07.csv**, VSD adjusted counts, HC  
+
+* **file_S4.08.csv**, DESeq2 counts, HC  
+
+* **file_S4.09.csv**, Table 4, candidate genes  
+
+* **file_S4.10.csv**, Raw read count, RefSeq v1.1 LC annotation   
+
+* **file_S4.10.1.csv**, LC gene name and positions  
+
+* **file_S4.11.zip**, FastQC results  
+
+* **file_S4.12.sh and file_S4.13.sh**, run STAR shell script HC and LC, respectively  
+
+* **file_S4.14.xlsx**, W7984 haplotype chr 5AS expression gene annotation  
+
+* **file_S4.15.txt**, Genomewide GO terms, HC annotation  
+
+* **file_S4.16.csv**, DEGs repeated across multiple GO terms (filters to 292 DEGs)  
+
+* **file_S4.17.xlsx**, DEG/GO term (292 genes) and ortholog annotation  
+
+* **file_S4.18.xlsx**, TraesCS5A02G16099 3' SNP annotation  
+
+* **file_S4.19.xlsx**, Chromosome 1A DEGs misalignment  
+
+* **file_S4.20.csv**, 556 DEGs   
