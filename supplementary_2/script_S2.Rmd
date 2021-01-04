@@ -1,0 +1,1134 @@
+---
+title: "script_S2: HIF analysis"
+output: github_document
+always_allow_html: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+All packages, data, and statistical analysis for reproducing SynOp HIF population results reported in Taagen et al. 2021. Please see `script_S2.Rmd` for full R script. 
+
+**Load packages**
+```{r load packages, message=FALSE}
+library(tidyverse) # R/tidyverse version 1.3.0
+library(lme4) #R/lme4 package version 1.1-21
+library(knitr) # R/knitr package version 1.28 
+library(rlang) #R/rlang package version 0.4.5
+library(emmeans) # R/emmeans package version 1.4.6
+library(car) # R/car package version 3.0-10
+library(gt) #R/gt version 0.2.2
+library(ggpubr) # R/ggpubr package version 0.2.5 
+library(rstatix) # R/rstatix package version 0.6.0
+```
+
+### SynOp HIF BLUP phenotypes
+
+A 129-entry inbred subset of SynOp HIF entries and four checks (W7984, Opata, Tom and Glenn) were were selected and grown in randomized headrows. There are three site-year combinations (2019 Snyder, 2020 Caldwell, 2020 Helfer), with up to five replicates per entry, across 2019 and 2020 in Ithaca, NY (up to 3 rep at Snyder, 1 rep Caldwell, 1 rep Helfer). Univariate linear models with random environment and genotype effects were fitted with the `R/lme4` package to obtain best linear unbiased predictions (BLUPs) for `TGW`, `GL`, `GW`, `SPS`, `HD`, `GFD`, and `HT` phenotypes across the three environments.
+
+**Load data**  
+```{r load BLUP data, message=FALSE}
+SynOpHIF_Phenotypes <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_2/file_S2.1.csv", na = "")
+SynOpHIF_Phenotypes$SynOpHIF = as.factor(SynOpHIF_Phenotypes$SynOpHIF)
+SynOpHIF_Phenotypes$Entry = as.factor(SynOpHIF_Phenotypes$Entry)
+SynOpHIF_Phenotypes$Year = as.factor(SynOpHIF_Phenotypes$Year)
+SynOpHIF_Phenotypes$Location = as.factor(SynOpHIF_Phenotypes$Location)
+SynOpHIF_Phenotypes$Rep = as.factor(SynOpHIF_Phenotypes$Rep)
+SynOpHIF_Phenotypes$chr5AS_consensus = as.factor(SynOpHIF_Phenotypes$chr5AS_consensus)
+SynOpHIF_Phenotypes$KASP_341510829 = as.factor(SynOpHIF_Phenotypes$KASP_341510829)
+```
+
+
+**TGW**  
+
+```{r TGW models, warning=FALSE, echo = FALSE}
+TGW_model0 <- lmer(TGW ~ (1|Entry),
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(TGW_model0) 
+
+TGW_model1 <- lmer(TGW ~ (1|Entry) + (1|Rep), 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(TGW_model1) #rep slightly reduces residual variance 
+
+TGW_model2 <- lmer(TGW ~ (1|Entry) + (1|Rep) + SynOpHIF, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(TGW_model2) #include the three HIF classifiers 
+
+TGW_model2.5 <- lmer(TGW ~ (1|Entry) + (1|Rep) + (1|SynOpHIF), 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(TGW_model2.5) #HIF classifier as random effect 
+
+TGW_model3 <- lmer(TGW ~ (1|Entry) + (1|Rep) + SynOpHIF + HD, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(TGW_model3) #include the HD 
+
+TGW_model3.5 <- lmer(TGW ~ (1|Entry) + (1|Rep) + (1|SynOpHIF) + HD, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(TGW_model3.5) #include the HD and HIF classifier as random effect
+
+TGW_model4 <- lmer(TGW ~ (1|Entry) + (1|Rep) + SynOpHIF + chr5AS_consensus, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(TGW_model4) #5AS as fixed effect  
+
+AIC_TGW <- AIC(TGW_model0, TGW_model1, TGW_model2, TGW_model2.5, TGW_model3, TGW_model3.5, TGW_model4)
+
+models <- c("TGW ~ (1|Entry)",
+            "TGW ~ (1|Entry) + (1|Rep)",
+            "TGW ~ (1|Entry) + (1|Rep) + SynOpHIF",
+            "TGW ~ (1|Entry) + (1|Rep) + (1|SynOpHIF)",
+            "TGW ~ (1|Entry) + (1|Rep) + SynOpHIF + HD",
+            "TGW ~ (1|Entry) + (1|Rep) + (1|SynOpHIF) + HD",
+            "TGW ~ (1|Entry) + (1|Rep) + SynOpHIF + chr5AS")
+a = cbind(models, AIC_TGW) %>% 
+  gt()%>%
+  tab_options(table.align='left')
+
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
+```
+
+**GL**  
+
+```{r GL models, warning=FALSE, echo=FALSE}
+GL_model0 <- lmer(GL ~ (1|Entry),
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GL_model0) 
+
+GL_model1 <- lmer(GL ~ (1|Entry) + (1|Rep), 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GL_model1) #rep reduces residual variance 
+
+GL_model2 <- lmer(GL ~ (1|Entry) + (1|Rep) + SynOpHIF, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GL_model2) #include the three HIF classifiers 
+
+GL_model2.5 <- lmer(GL ~ (1|Entry) + (1|Rep) + (1|SynOpHIF), 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GL_model2.5) #include the three HIF classifiers as random effect 
+
+GL_model3 <- lmer(GL ~ (1|Entry) + (1|Rep) + SynOpHIF + HD, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GL_model3) #include HD
+
+GL_model3.5 <- lmer(GL ~ (1|Entry) + (1|Rep) + (1|SynOpHIF) + HD, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GL_model3.5) #include the HD and HIF classifier as random effect
+
+GL_model4 <- lmer(GL ~ (1|Entry) + (1|Rep) + SynOpHIF + chr5AS_consensus, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GL_model4) #5AS as fixed effect  
+
+AIC_GL <- AIC(GL_model0, GL_model1, GL_model2, GL_model2.5, GL_model3, GL_model3.5, GL_model4)
+models <- c("GL ~ (1|Entry)",
+            "GL ~ (1|Entry) + (1|Rep)",
+            "GL ~ (1|Entry) + (1|Rep) + SynOpHIF",
+            "GL ~ (1|Entry) + (1|Rep) + (1|SynOpHIF)",
+            "GL ~ (1|Entry) + (1|Rep) + SynOpHIF + HD",
+            "GL ~ (1|Entry) + (1|Rep) + (1|SynOpHIF) + HD",
+            "GL ~ (1|Entry) + (1|Rep) + SynOpHIF + chr5AS")
+a = cbind(models, AIC_GL) %>% 
+  gt()%>%
+  tab_options(table.align='left')
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
+```
+
+**GW**  
+
+```{r GW models, warning=FALSE, echo=FALSE}
+GW_model0 <- lmer(GW ~ (1|Entry),
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GW_model0) 
+
+GW_model1 <- lmer(GW ~ (1|Entry) + (1|Rep), 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GW_model1) #rep reduces residual variance 
+
+GW_model2 <- lmer(GW ~ (1|Entry) + (1|Rep) + SynOpHIF, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GW_model2) #include the three HIF classifiers 
+
+GW_model2.5 <- lmer(GW ~ (1|Entry) + (1|Rep) + (1|SynOpHIF), 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GW_model2.5) #include the three HIF classifiers as random effect
+
+GW_model3 <- lmer(GW ~ (1|Entry) + (1|Rep) + SynOpHIF + HD, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GW_model3) #include HD
+
+GW_model3.5 <- lmer(GW ~ (1|Entry) + (1|Rep) + (1|SynOpHIF) + HD, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GW_model3.5) #include HD
+
+GW_model4 <- lmer(GW ~ (1|Entry) + (1|Rep) + SynOpHIF + chr5AS_consensus, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GW_model4) #5AS as fixed effect  
+
+AIC_GW <- AIC(GW_model0, GW_model1, GW_model2, GW_model2.5, GW_model3, GW_model3.5, GW_model4)
+models <- c("GW ~ (1|Entry)",
+            "GW ~ (1|Entry) + (1|Rep)",
+            "GW ~ (1|Entry) + (1|Rep) + SynOpHIF",
+            "GW ~ (1|Entry) + (1|Rep) + (1|SynOpHIF)",
+            "GW ~ (1|Entry) + (1|Rep) + SynOpHIF + HD",
+            "GW ~ (1|Entry) + (1|Rep) + (1|SynOpHIF) + HD",
+            "GW ~ (1|Entry) + (1|Rep) + SynOpHIF + chr5AS")
+a = cbind(models, AIC_GW) %>% 
+  gt()%>%
+  tab_options(table.align='left')
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
+```
+
+**SPS**  
+
+```{r SPS models, warning=FALSE, echo = FALSE}
+SPS_model0 <- lmer(SPS ~ (1|Entry),
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(SPS_model0) #boundary singlar fit
+
+SPS_model1 <- lmer(SPS ~ (1|Entry) + (1|Rep), 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(SPS_model1) #rep explains most variance 
+
+SPS_model2 <- lmer(SPS ~ (1|Entry) + (1|Rep) + SynOpHIF, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(SPS_model2) #include the three HIF classifiers 
+
+SPS_model2.5 <- lmer(SPS ~ (1|Entry) + (1|Rep) + (1|SynOpHIF), 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(SPS_model2.5) #include the three HIF classifiers as random effect
+
+SPS_model3 <- lmer(SPS ~ (1|Entry) + (1|Rep) + SynOpHIF + HD, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(SPS_model3) #include HD 
+
+SPS_model3.5 <- lmer(SPS ~ (1|Entry) + (1|Rep) + (1|SynOpHIF) + HD, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(SPS_model3.5) #include HD with random HIF
+
+SPS_model4 <- lmer(SPS ~ (1|Entry) + (1|Rep) + SynOpHIF + chr5AS_consensus, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(SPS_model4) #5AS as fixed effect  
+
+AIC_SPS <- AIC(SPS_model0, SPS_model1, SPS_model2, SPS_model2.5, SPS_model3, SPS_model3.5, SPS_model4)
+#warning error because some missing values in `Rep` and lmer default to omit  
+models <- c("SPS ~ (1|Entry)",
+            "SPS ~ (1|Entry) + (1|Rep)",
+            "SPS ~ (1|Entry) + (1|Rep) + SynOpHIF",
+            "SPS ~ (1|Entry) + (1|Rep) + (1|SynOpHIF)",
+            "SPS ~ (1|Entry) + (1|Rep) + SynOpHIF + HD",
+            "SPS ~ (1|Entry) + (1|Rep) + (1|SynOpHIF) + HD",
+            "SPS ~ (1|Entry) + (1|Rep) + SynOpHIF + chr5AS")
+a = cbind(models, AIC_SPS) %>% 
+  gt()%>%
+  tab_options(table.align='left')
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
+```
+
+**HD**  
+
+```{r HD models, warning=FALSE, echo=FALSE}
+HD_model0 <- lmer(HD ~ (1|Entry),
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(HD_model0)  
+
+HD_model1 <- lmer(HD ~ (1|Entry) + (1|Rep), 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(HD_model1) #Rep reduces residual variance
+
+HD_model2 <- lmer(HD ~ (1|Entry) + (1|Rep) + SynOpHIF, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(HD_model2) #include the three HIF classifiers 
+
+HD_model2.5 <- lmer(HD ~ (1|Entry) + (1|Rep) + (1|SynOpHIF), 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(HD_model2.5) #include the three HIF classifiers 
+
+HD_model3 <- lmer(HD ~ (1|Entry) + (1|Rep) + SynOpHIF + HT, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(HD_model3) #include HT 
+
+HD_model3.5 <- lmer(HD ~ (1|Entry) + (1|Rep) + (1|SynOpHIF) + HT, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(HD_model3) #include HT and random HIF 
+
+HD_model4 <- lmer(HD ~ (1|Entry) + (1|Rep) + SynOpHIF + chr5AS_consensus, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(HD_model3) #5AS as fixed effect  
+
+AIC_HD <- AIC(HD_model0, HD_model1, HD_model2, HD_model2.5, HD_model3, HD_model3.5, HD_model4)
+#warning error because some missing values in `Rep` and lmer default to omit  
+models <- c("HD ~ (1|Entry)",
+            "HD ~ (1|Entry) + (1|Rep)",
+            "HD ~ (1|Entry) + (1|Rep) + SynOpHIF",
+            "HD ~ (1|Entry) + (1|Rep) + (1|SynOpHIF)",
+            "HD ~ (1|Entry) + (1|Rep) + SynOpHIF + HT",
+            "HD ~ (1|Entry) + (1|Rep) + (1|SynOpHIF) + HT",
+            "HD ~ (1|Entry) + (1|Rep) + SynOpHIF + chr5AS")
+a = cbind(models, AIC_HD) %>% 
+  gt()%>%
+  tab_options(table.align='left')
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
+```
+
+ 
+**GFD**   
+
+```{r GFD models, warning=FALSE, echo=FALSE}
+GFD_model0 <- lmer(GFD ~ (1|Entry),
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GFD_model0)  
+
+GFD_model1 <- lmer(GFD ~ (1|Entry) + (1|Rep), 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GFD_model1) #Rep reduces residual variance
+
+GFD_model2 <- lmer(GFD ~ (1|Entry) + (1|Rep) + SynOpHIF, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GFD_model2) #include the three HIF classifiers 
+
+GFD_model2.5 <- lmer(GFD ~ (1|Entry) + (1|Rep) + (1|SynOpHIF), 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GFD_model2.5) #include the three HIF classifiers 
+
+GFD_model3 <- lmer(GFD ~ (1|Entry) + (1|Rep) + SynOpHIF + HD, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GFD_model3) #include HD 
+
+GFD_model3.5 <- lmer(GFD ~ (1|Entry) + (1|Rep) + (1|SynOpHIF) + HD, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GFD_model3.5) #include HD and random HIF 
+
+GFD_model4 <- lmer(GFD ~ (1|Entry) + (1|Rep) + SynOpHIF + chr5AS_consensus, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(GFD_model4) #5AS as fixed effect 
+
+AIC_GFD <- AIC(GFD_model0, GFD_model1, GFD_model2, GFD_model2.5, GFD_model3, GFD_model3.5, GFD_model4)
+models <- c("GFD ~ (1|Entry)",
+            "GFD ~ (1|Entry) + (1|Rep)",
+            "GFD ~ (1|Entry) + (1|Rep) + SynOpHIF",
+            "GFD ~ (1|Entry) + (1|Rep) + (1|SynOpHIF)",
+            "GFD ~ (1|Entry) + (1|Rep) + SynOpHIF + HD",
+            "GFD ~ (1|Entry) + (1|Rep) + (1|SynOpHIF) + HD",
+            "GFD ~ (1|Entry) + (1|Rep) + SynOpHIF + chr5AS")
+a = cbind(models, AIC_GFD) %>% 
+  gt()%>%
+  tab_options(table.align='left')
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
+```
+
+**HT**  
+
+```{r HT models, warning=FALSE, echo=FALSE}
+HT_model0 <- lmer(HT ~ (1|Entry),
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(HT_model0)  #lots of residual var
+
+HT_model1 <- lmer(HT ~ (1|Entry) + (1|Rep), 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(HT_model1) #Rep reduces residual variance
+
+HT_model2 <- lmer(HT ~ (1|Entry) + (1|Rep) + SynOpHIF, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(HT_model2) #include the three HIF classifiers 
+
+HT_model2.5 <- lmer(HT ~ (1|Entry) + (1|Rep) + (1|SynOpHIF), 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(HT_model2.5) #include the three HIF classifiers
+
+HT_model3 <- lmer(HT ~ (1|Entry) + (1|Rep) + SynOpHIF + HD, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(HT_model3) #include HD 
+
+HT_model3.5 <- lmer(HT ~ (1|Entry) + (1|Rep) + (1|SynOpHIF) + HD, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(HT_model3.5) #include HD and random HIF
+
+HT_model4 <- lmer(HT ~ (1|Entry) + (1|Rep) + SynOpHIF + chr5AS_consensus, 
+                           data = SynOpHIF_Phenotypes, REML = FALSE)
+#summary(HT_model4) #5AS as fixed effect  
+
+AIC_HT <- AIC(HT_model0, HT_model1, HT_model2, HT_model2.5, HT_model3, HT_model3.5, HT_model4)
+models <- c("HT ~ (1|Entry)",
+            "HT ~ (1|Entry) + (1|Rep)",
+            "HT ~ (1|Entry) + (1|Rep) + SynOpHIF",
+            "HT ~ (1|Entry) + (1|Rep) + (1|SynOpHIF)",
+            "HT ~ (1|Entry) + (1|Rep) + SynOpHIF + HD",
+            "HT ~ (1|Entry) + (1|Rep) + (1|SynOpHIF) + HD",
+            "HT ~ (1|Entry) + (1|Rep) + SynOpHIF + chr5AS")
+a = cbind(models, AIC_HT) %>% 
+  gt()%>%
+  tab_options(table.align='left')
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
+```
+
+### Select models, extract BLUPs
+
+The models were selected based on low AIC value, and include the `SynOpHIF` classification variable. 
+
+* `TGW ~ (1|Entry) + (1|Rep) + SynOpHIF`    
+
+* `GL ~ (1|Entry) + (1|Rep) + 1|SynOpHIF`   
+
+* `GW ~ (1|Entry) + (1|Rep) + 1|SynOpHIF`  
+
+* `SPS ~ (1|Entry) + (1|Rep) + SynOpHIF + HD`   
+
+* `HD ~ (1|Entry) + (1|Rep) + SynOpHIF + HT` 
+
+* `GFD ~ (1|Entry) + (1|Rep) + SynOpHIF + HD` 
+
+* `HT ~ (1|Entry) + (1|Rep) + SynOpHIF + HD`    
+
+**and later,** `phenotype ~ (1|Entry) + (1|Rep) + SynOpHIF + chr5AS_consensus` for testing 5AS significance after Gutierrez-Gonzalez et al. 2019 published genome sequence that indicated chr 5AS structural variation.  
+
+**Extract random effects from univariate mixed linear models for entries (obtain BLUPs):** 
+```{r BLUP}
+BLUP_TGW <- ranef(TGW_model2)$Entry 
+BLUP_GL <- ranef(GL_model2)$Entry 
+BLUP_GW <- ranef(GW_model2)$Entry 
+BLUP_SPS <- ranef(SPS_model3)$Entry 
+BLUP_HD <- ranef(HD_model3)$Entry 
+BLUP_GFD <- ranef(HD_model3)$Entry 
+BLUP_HT <- ranef(HT_model3)$Entry 
+```
+
+
+**Phenotype means, add to BLUP for scaled phenotype value:**
+```{r phenotype mean}
+TGW_mean <- mean(SynOpHIF_Phenotypes$TGW, na.rm = TRUE) 
+BLUP_TGW <- BLUP_TGW + TGW_mean
+names(BLUP_TGW)[1] <- "BLUP_TGW"
+BLUP_TGW <- BLUP_TGW %>% 
+  rownames_to_column(var = "entry")
+
+GL_mean <- mean(SynOpHIF_Phenotypes$GL, na.rm = TRUE)
+BLUP_GL <- BLUP_GL + GL_mean
+names(BLUP_GL)[1] <- "BLUP_GL"
+BLUP_GL <- BLUP_GL %>% 
+  rownames_to_column(var = "entry")
+
+GW_mean <- mean(SynOpHIF_Phenotypes$GW, na.rm = TRUE)
+BLUP_GW <- BLUP_GW + GW_mean
+names(BLUP_GW)[1] <- "BLUP_GW"
+BLUP_GW <- BLUP_GW %>% 
+  rownames_to_column(var = "entry")
+
+SPS_mean <- mean(SynOpHIF_Phenotypes$SPS, na.rm = TRUE)
+BLUP_SPS <- BLUP_SPS + SPS_mean
+names(BLUP_SPS)[1] <- "BLUP_SPS"
+BLUP_SPS <- BLUP_SPS %>% 
+  rownames_to_column(var = "entry")
+
+HD_mean <- mean(SynOpHIF_Phenotypes$HD, na.rm = TRUE)
+BLUP_HD <- BLUP_HD + HD_mean
+names(BLUP_HD)[1] <- "BLUP_HD"
+BLUP_HD <- BLUP_HD %>% 
+  rownames_to_column(var = "entry")
+
+GFD_mean <- mean(SynOpHIF_Phenotypes$GFD, na.rm = TRUE)
+BLUP_GFD <- BLUP_GFD + GFD_mean
+names(BLUP_GFD)[1] <- "BLUP_GFD"
+BLUP_GFD <- BLUP_GFD %>% 
+  rownames_to_column(var = "entry")
+
+HT_mean <- mean(SynOpHIF_Phenotypes$HT, na.rm = TRUE)
+BLUP_HT <- BLUP_HT + HT_mean
+names(BLUP_HT)[1] <- "BLUP_HT"
+BLUP_HT <- BLUP_HT %>% 
+  rownames_to_column(var = "entry")
+```
+
+**Create csv files**  
+*eval = FALSE,can be found in GitHub repository, `file_S2.9.csv`*
+```{r csv output, eval = FALSE}
+SynOpHIF_BLUP <- BLUP_TGW %>% 
+  inner_join(BLUP_GL, by=c("entry")) %>% 
+  inner_join(BLUP_GW, by=c("entry")) %>% 
+  inner_join(BLUP_SPS, by=c("entry")) %>% 
+  inner_join(BLUP_HD, by=c("entry")) %>% 
+  inner_join(BLUP_GFD, by=c("entry")) %>% 
+  inner_join(BLUP_HT, by=c("entry")) 
+
+#write.csv(SynOpHIF_BLUP, "SynOpHIF_BLUP.csv") 
+```
+
+### Phenotypes across years, Table 2  
+```{r anova table 2, message=FALSE}
+sny19a <- SynOpHIF_Phenotypes %>% 
+  filter(Rep == "A") 
+summary(aov(HD ~ KASP_341510829, data = sny19a))
+summary(aov(GFD ~ KASP_341510829, data = sny19a))
+summary(aov(HT ~ KASP_341510829, data = sny19a))
+summary(aov(SPS ~ KASP_341510829, data = sny19a))
+summary(aov(TGW ~ KASP_341510829, data = sny19a))
+summary(aov(GL ~ KASP_341510829, data = sny19a))
+summary(aov(GW ~ KASP_341510829, data = sny19a)) 
+
+sny19b <- SynOpHIF_Phenotypes %>% 
+  filter(Rep == "B") 
+summary(aov(HD ~ KASP_341510829, data = sny19b))
+summary(aov(GFD ~ KASP_341510829, data = sny19b))
+summary(aov(HT ~ KASP_341510829, data = sny19b))
+summary(aov(SPS ~ KASP_341510829, data = sny19b))
+summary(aov(TGW ~ KASP_341510829, data = sny19b))
+summary(aov(GL ~ KASP_341510829, data = sny19b))
+summary(aov(GW ~ KASP_341510829, data = sny19b))
+
+sny19c <- SynOpHIF_Phenotypes %>% 
+  filter(Rep == "C") 
+summary(aov(HD ~ KASP_341510829, data = sny19c))
+summary(aov(HT ~ KASP_341510829, data = sny19c))
+summary(aov(SPS ~ KASP_341510829, data = sny19c))
+summary(aov(TGW ~ KASP_341510829, data = sny19c))
+summary(aov(GL ~ KASP_341510829, data = sny19c))
+summary(aov(GW ~ KASP_341510829, data = sny19c))
+
+cald20 <- SynOpHIF_Phenotypes %>% 
+  filter(Rep == "D") 
+summary(aov(HD ~ KASP_341510829, data = cald20))
+summary(aov(GFD ~ KASP_341510829, data = cald20))
+summary(aov(HT ~ KASP_341510829, data = cald20))
+summary(aov(SPS ~ KASP_341510829, data = cald20))
+summary(aov(TGW ~ KASP_341510829, data = cald20))
+summary(aov(GL ~ KASP_341510829, data = cald20))
+summary(aov(GW ~ KASP_341510829, data = cald20))
+
+helf20 <- SynOpHIF_Phenotypes %>% 
+  filter(Rep == "E") 
+summary(aov(HD ~ KASP_341510829, data = helf20))
+summary(aov(GFD ~ KASP_341510829, data = helf20))
+summary(aov(HT ~ KASP_341510829, data = helf20))
+summary(aov(SPS ~ KASP_341510829, data = helf20))
+summary(aov(TGW ~ KASP_341510829, data = helf20))
+summary(aov(GL ~ KASP_341510829, data = helf20))
+summary(aov(GW ~ KASP_341510829, data = helf20))  
+
+blup_pheno <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_2/file_S2.4.csv", na = "NA")
+summary(aov(HD_BLUP ~ KASP_341510829, data = blup_pheno))
+summary(aov(GFD_BLUP ~ KASP_341510829, data = blup_pheno))
+summary(aov(HT_BLUP ~ KASP_341510829, data = blup_pheno))
+summary(aov(SPS_BLUP ~ KASP_341510829, data = blup_pheno))
+summary(aov(TGW_BLUP ~ KASP_341510829, data = blup_pheno))
+summary(aov(GL_BLUP ~ KASP_341510829, data = blup_pheno))
+summary(aov(GW_BLUP ~ KASP_341510829, data = blup_pheno))  
+```
+
+```{r table2, message=FALSE, echo=FALSE}
+table2 <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_2/file_S2.2%20.csv", na = c(""))
+
+a = table2 %>% 
+  rename("TGW (g)" = "TGW",
+         "GL (mm)" = "GL",
+         "GW (mm)" = "GW",
+         "HD (julian)" = "HD",
+         "GFD (days)" = "GFD",
+         "HT (cm)" = "HT") %>% 
+  gt() %>% 
+  fmt_missing(
+    columns = 1:10,
+    missing_text = " "
+  ) %>% 
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = cells_column_labels(everything())
+  ) %>% 
+  opt_table_lines(extent = "default") %>%
+  tab_options(
+    column_labels.border.top.color = "white",
+    column_labels.border.top.width = px(3),
+    column_labels.border.bottom.color = "black",
+    table_body.hlines.color = "white",
+    table.border.bottom.color = "white",
+    table.border.bottom.width = px(3)
+  ) %>% 
+  tab_style(
+    style = cell_borders(
+      sides = "top",
+      color = "black",
+      weight = px(2)
+    ),
+    locations = cells_body(
+      columns = everything(),
+      rows = Year == "BLUP"
+    )
+  )  %>% 
+  tab_style(
+    style = list(
+      cell_text(style = "italic")
+    ),
+    locations = cells_body(
+      columns = 3,
+      rows = everything()
+    )
+  ) %>% 
+  tab_header(title = md(""),
+    subtitle = md("**Table 2** Mean heading date (HD), grain fill duration (GFD), plant height (HT), spikelets per spike (SPS), thousand grain weight (TGW), grain length (GL) & grain width (GW) of SynOp HIF entries with *QTgw.cnl-5A+* vs. *QTgw.cnl-5A-* alleles")
+  ) %>% 
+  tab_options(
+    heading.subtitle.font.size = 16,
+    heading.align = "left",
+    table.border.top.color = "black",
+    column_labels.border.bottom.color = "black",
+    column_labels.border.bottom.width= px(3),
+  )%>%
+  tab_options(table.align='left')  
+
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
+```
+
+### KASP marker sequence order comparison with 10 + Genome Project  
+Each color represents SNP BLAST position across 12 genomes. See `file_S2.6` for marker names.  
+```{r marker comparison, echo=FALSE, message=FALSE}
+blast_position <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_2/file_S2.6.csv")
+
+ggplot(data = blast_position, aes(x= reorder(Genome, Mbp), y= Mbp, color= SNP))+
+  geom_count()+
+  scale_color_discrete()+
+  theme_minimal()+
+  scale_y_reverse() +
+  ylab("Chromosome 5A (Mbp)") +
+  xlab("Genome") +
+  theme(legend.position ="none", 
+        panel.grid.major= element_blank(), 
+        panel.grid.minor = element_blank(), 
+        axis.text.x = element_text(angle = 45))
+```
+
+### Fine-mapping figures 
+
+The 129 entry fine-mapping population can be subset into crossover groups based on shared recombination intervals between SNPs and comparisons across BLUP phenotypes. Please see `HIF_groups.xlsx` for entries in each group (n = # of entries per group).  
+```{r HIF group figures, echo=FALSE, message= FALSE}
+HIFttest <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_2/file_S2.7.csv")
+
+#TGW
+HIFttest %>%
+  ggplot(aes(x=reorder(Group_n, -order), y= TGW_BLUP, fill=Phenotype_TGW))+ 
+  geom_boxplot(width=0.3, alpha = 0.8)+
+  scale_fill_manual(values = c("#3564D4", "mediumaquamarine"))+
+  theme(axis.title.x = element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
+  theme_bw(base_size = 18)+
+  coord_flip()+
+  ylim(26,46)+
+  theme(axis.ticks.y=element_blank(), panel.grid.major= element_blank(), panel.border= element_blank(), legend.position="top")+
+  ylab("BLUP thousand grain weight") +
+  xlab("Group (n)") +
+  labs(fill = "Phenotype-like:")
+#GW
+HIFttest %>%
+  ggplot(aes(x=reorder(Group_n, -order), y= GW_BLUP, fill=Phenotype_GW))+ 
+  geom_boxplot(width=0.3, alpha = 0.8)+
+  scale_fill_manual(values = c("#3564D4", "mediumaquamarine"))+
+  theme(axis.title.x = element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
+  theme_bw(base_size = 18)+
+  coord_flip()+
+  #ylim(26,46)+
+  theme(axis.ticks.y=element_blank(), panel.grid.major= element_blank(), panel.border= element_blank(), legend.position="top")+
+  ylab("BLUP grain width") +
+  xlab("Group (n)") +
+  labs(fill = "Phenotype-like:")
+#GL
+HIFttest %>%
+  ggplot(aes(x=reorder(Group_n, -order), y= GL_BLUP, fill=Phenotype_GW))+ 
+  geom_boxplot(width=0.3, alpha = 0.8)+
+  scale_fill_manual(values = c("#3564D4", "mediumaquamarine"))+
+  theme(axis.title.x = element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
+  theme_bw(base_size = 18)+
+  coord_flip()+
+  #ylim(26,46)+
+  theme(axis.ticks.y=element_blank(), panel.grid.major= element_blank(), panel.border= element_blank(), legend.position="top")+
+  ylab("BLUP grain length") +
+  xlab("Group (n)") +
+  labs(fill = "Phenotype-like:")
+#SPS
+HIFttest %>%
+  ggplot(aes(x=reorder(Group_n, -order), y= SPS_BLUP, fill=Phenotype_GW))+ 
+  geom_boxplot(width=0.3, alpha = 0.8)+
+  scale_fill_manual(values = c("#3564D4", "mediumaquamarine"))+
+  theme(axis.title.x = element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
+  theme_bw(base_size = 18)+
+  coord_flip()+
+  #ylim(26,46)+
+  theme(axis.ticks.y=element_blank(), panel.grid.major= element_blank(), panel.border= element_blank(), legend.position="top")+
+  ylab("BLUP spikelet per spike") +
+  xlab("Group (n)") +
+  labs(fill = "Phenotype-like:")
+#HD
+HIFttest %>%
+  ggplot(aes(x=reorder(Group_n, -order), y= HD_BLUP, fill=Phenotype_GW))+ 
+  geom_boxplot(width=0.3, alpha = 0.8)+
+  scale_fill_manual(values = c("#3564D4", "mediumaquamarine"))+
+  theme(axis.title.x = element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
+  theme_bw(base_size = 18)+
+  coord_flip()+
+  #ylim(26,46)+
+  theme(axis.ticks.y=element_blank(), panel.grid.major= element_blank(), panel.border= element_blank(), legend.position="top")+
+  ylab("BLUP heading date") +
+  xlab("Group (n)") +
+  labs(fill = "Phenotype-like:")
+#GFD
+HIFttest %>%
+  ggplot(aes(x=reorder(Group_n, -order), y= GFD_BLUP, fill=Phenotype_GW))+ 
+  geom_boxplot(width=0.3, alpha = 0.8)+
+  scale_fill_manual(values = c("#3564D4", "mediumaquamarine"))+
+  theme(axis.title.x = element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
+  theme_bw(base_size = 18)+
+  coord_flip()+
+  #ylim(26,46)+
+  theme(axis.ticks.y=element_blank(), panel.grid.major= element_blank(), panel.border= element_blank(), legend.position="top")+
+  ylab("BLUP grain fill duration") +
+  xlab("Group (n)") +
+  labs(fill = "Phenotype-like:")
+#HT
+HIFttest %>%
+  ggplot(aes(x=reorder(Group_n, -order), y= HT_BLUP, fill=Phenotype_GW))+ 
+  geom_boxplot(width=0.3, alpha = 0.8)+
+  scale_fill_manual(values = c("#3564D4", "mediumaquamarine"))+
+  theme(axis.title.x = element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
+  theme_bw(base_size = 18)+
+  coord_flip()+
+  #ylim(26,46)+
+  theme(axis.ticks.y=element_blank(), panel.grid.major= element_blank(), panel.border= element_blank(), legend.position="top")+
+  ylab("BLUP height") +
+  xlab("Group (n)") +
+  labs(fill = "Phenotype-like:")
+```
+
+```{r figure 2, echo = FALSE, eval= FALSE}
+#figure 2
+fig2A <- HIFttest %>%
+  ggplot(aes(x=reorder(Group_n, -order), y= TGW_BLUP, fill=Phenotype_TGW))+ 
+  geom_boxplot(width=0.3, alpha = 0.8)+
+  scale_fill_manual(values = c("#3564D4", "mediumaquamarine"))+
+  theme(axis.title.x = element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
+  theme_bw(base_size = 18)+
+  coord_flip()+
+  #ylim(26,46)+
+  theme(axis.title.y = element_blank(), axis.ticks.y=element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
+  ylab("Thousand grain weight (g)") +
+  theme(legend.position ="none")
+ggsave(file="fig2A", plot=fig2A, bg="transparent", width=7, height=5, device = "tiff", dpi = 700)
+
+fig2B <- HIFttest %>%
+  ggplot(aes(x=reorder(Group_n, -order), y= GW_BLUP, fill=Phenotype_GW))+ 
+  geom_boxplot(width=0.3, alpha = 0.8)+
+  scale_fill_manual(values = c("#3564D4", "mediumaquamarine"))+
+  theme(axis.title.x = element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
+  theme_bw(base_size = 18)+
+  coord_flip()+
+  #ylim(2.8,3.6)+
+  theme(axis.title.y = element_blank(), axis.ticks.y=element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
+  ylab("Grain width (mm)") +
+  theme(legend.position ="none")
+ggsave(file="fig2B", plot=fig2B, bg="transparent", width=7, height=5, device = "tiff", dpi = 700)
+```
+
+### Fine-mapping T.test  
+T.test comparisons for each group vs QTgw.cnl-5A+ or QTgw.cnl-5A- (based on like-phenotype)  
+```{r t.test}
+# QTgw.cnl-5A+ vs QTgw.cnl-5A-
+groupOW <- HIFttest %>% 
+  filter(Group== "QTgw.cnl-5A+" | Group== "QTgw.cnl-5A-")
+t.test(TGW_BLUP ~ Group, data = groupOW)
+t.test(GW_BLUP ~ Group, data = groupOW)
+# Group 1 vs QTgw.cnl-5A- 
+groupW1 <- HIFttest %>% 
+  filter(Group== "QTgw.cnl-5A-" | Group== "1")
+t.test(TGW_BLUP ~ Group, data = groupW1)
+t.test(GW_BLUP ~ Group, data = groupW1)
+# Group 2 vs QTgw.cnl-5A- 
+groupW2 <- HIFttest %>% 
+  filter(Group== "QTgw.cnl-5A-" | Group== "2")
+t.test(TGW_BLUP ~ Group, data = groupW2)
+t.test(GW_BLUP ~ Group, data = groupW2)
+# Group 3 vs QTgw.cnl-5A- 
+groupW3 <- HIFttest %>% 
+  filter(Group== "QTgw.cnl-5A-" | Group== "3")
+t.test(TGW_BLUP ~ Group, data = groupW3)
+t.test(GW_BLUP ~ Group, data = groupW3)
+# Group 4 vs QTgw.cnl-5A- 
+groupW4 <- HIFttest %>% 
+  filter(Group== "QTgw.cnl-5A-" | Group== "4")
+t.test(TGW_BLUP ~ Group, data = groupW4)
+t.test(GW_BLUP ~ Group, data = groupW4)
+# Group 5 vs QTgw.cnl-5A+ 
+groupW5 <- HIFttest %>% 
+  filter(Group== "QTgw.cnl-5A+" | Group== "5")
+t.test(TGW_BLUP ~ Group, data = groupW5)
+t.test(GW_BLUP ~ Group, data = groupW5)
+# Group 6 vs QTgw.cnl-5A+ 
+groupW6 <- HIFttest %>% 
+  filter(Group== "QTgw.cnl-5A+" | Group== "6")
+t.test(TGW_BLUP ~ Group, data = groupW6)
+t.test(GW_BLUP ~ Group, data = groupW6)
+# Group 7 vs QTgw.cnl-5A+ 
+groupW7 <- HIFttest %>% 
+  filter(Group== "QTgw.cnl-5A+" | Group== "7")
+t.test(TGW_BLUP ~ Group, data = groupW7)
+t.test(GW_BLUP ~ Group, data = groupW7)
+# Group 8 vs QTgw.cnl-5A+ 
+groupW8 <- HIFttest %>% 
+  filter(Group== "QTgw.cnl-5A+" | Group== "8")
+t.test(TGW_BLUP ~ Group, data = groupW8)
+t.test(GW_BLUP ~ Group, data = groupW8)
+# Group 9 vs QTgw.cnl-5A+ 
+groupW9 <- HIFttest %>% 
+  filter(Group== "QTgw.cnl-5A+" | Group== "9")
+t.test(TGW_BLUP ~ Group, data = groupW9)
+t.test(GW_BLUP ~ Group, data = groupW9)
+# Group 10 vs QTgw.cnl-5A- 
+groupW10 <- HIFttest %>% 
+  filter(Group== "QTgw.cnl-5A-" | Group== "10")
+t.test(TGW_BLUP ~ Group, data = groupW10)
+t.test(GW_BLUP ~ Group, data = groupW10)
+# Group 11 too few entries, QTgw.cnl-5A- like phenotype
+# Group 12 too few entries, QTgw.cnl-5A+ like phenotype
+# Group 13 too few entries, QTgw.cnl-5A- like phenotype
+# Group 14 vs QTgw.cnl-5A- 
+groupW14 <- HIFttest %>% 
+  filter(Group== "QTgw.cnl-5A-" | Group== "14")
+t.test(TGW_BLUP ~ Group, data = groupW14)
+t.test(GW_BLUP ~ Group, data = groupW14)
+```
+
+### Test for interaction between 5AS and QTL
+```{r interaction test, echo=FALSE}
+TGW_int <- lmer(TGW ~ (1|Entry) +  chr5AS_consensus * KASP_341510829, data = SynOpHIF_Phenotypes, REML = FALSE)
+summary(TGW_int) # the interaction estimate +/- std. error includes zero, not significant 
+
+emmeans(TGW_int, pairwise ~ chr5AS_consensus*KASP_341510829)
+emmip(TGW_int, chr5AS_consensus ~ KASP_341510829, CIs = TRUE) #5AS present = heavier grains, Opata = heavier grains - they're in tight linkage but not interacting
+#Wald test, "Anova" from car package, is formal significance test for fixed effect
+Anova(TGW_int) #interaction is not significant
+
+#use REML=FALSE for all tests, https://link.springer.com/article/10.3758/s13428-016-0809-y
+# models with different fixed effects (such as the “full” and “reduced” models fitted when testing a fixed effect) do not have comparable likelihoods when fitted using REML
+```
+
+### Univariate models to account for chr 5AS in BLUP phenotype  
+
+`phenotype ~ (1|Entry) + (1|Rep) + SynOpHIF + chr5AS_consensus` 
+ 
+**Extract random effects from univariate mixed linear models for entries (obtain BLUPs):** 
+```{r BLUP 5AS}
+BLUP_TGW <- ranef(TGW_model4)$Entry 
+BLUP_GL <- ranef(GL_model4)$Entry 
+BLUP_GW <- ranef(GW_model4)$Entry 
+BLUP_SPS <- ranef(SPS_model4)$Entry 
+BLUP_HD <- ranef(HD_model4)$Entry 
+BLUP_GFD <- ranef(HD_model4)$Entry 
+BLUP_HT <- ranef(HT_model4)$Entry 
+```
+
+**Phenotype means, add to BLUP for scaled phenotype value:**
+```{r phenotype mean 5AS}
+TGW_mean <- mean(SynOpHIF_Phenotypes$TGW, na.rm = TRUE) 
+BLUP_TGW <- BLUP_TGW + TGW_mean
+names(BLUP_TGW)[1] <- "BLUP_TGW"
+BLUP_TGW <- BLUP_TGW %>% 
+  rownames_to_column(var = "entry")
+
+GL_mean <- mean(SynOpHIF_Phenotypes$GL, na.rm = TRUE)
+BLUP_GL <- BLUP_GL + GL_mean
+names(BLUP_GL)[1] <- "BLUP_GL"
+BLUP_GL <- BLUP_GL %>% 
+  rownames_to_column(var = "entry")
+
+GW_mean <- mean(SynOpHIF_Phenotypes$GW, na.rm = TRUE)
+BLUP_GW <- BLUP_GW + GW_mean
+names(BLUP_GW)[1] <- "BLUP_GW"
+BLUP_GW <- BLUP_GW %>% 
+  rownames_to_column(var = "entry")
+
+SPS_mean <- mean(SynOpHIF_Phenotypes$SPS, na.rm = TRUE)
+BLUP_SPS <- BLUP_SPS + SPS_mean
+names(BLUP_SPS)[1] <- "BLUP_SPS"
+BLUP_SPS <- BLUP_SPS %>% 
+  rownames_to_column(var = "entry")
+
+HD_mean <- mean(SynOpHIF_Phenotypes$HD, na.rm = TRUE)
+BLUP_HD <- BLUP_HD + HD_mean
+names(BLUP_HD)[1] <- "BLUP_HD"
+BLUP_HD <- BLUP_HD %>% 
+  rownames_to_column(var = "entry")
+
+GFD_mean <- mean(SynOpHIF_Phenotypes$GFD, na.rm = TRUE)
+BLUP_GFD <- BLUP_GFD + GFD_mean
+names(BLUP_GFD)[1] <- "BLUP_GFD"
+BLUP_GFD <- BLUP_GFD %>% 
+  rownames_to_column(var = "entry")
+
+HT_mean <- mean(SynOpHIF_Phenotypes$HT, na.rm = TRUE)
+BLUP_HT <- BLUP_HT + HT_mean
+names(BLUP_HT)[1] <- "BLUP_HT"
+BLUP_HT <- BLUP_HT %>% 
+  rownames_to_column(var = "entry")
+```
+
+**Create csv files**  
+*eval = FALSE,can be found in GitHub repository, `file_S2.10.csv`*
+```{r 5AS csv output, eval = FALSE}
+SynOpHIF_BLUP_5AS <- BLUP_TGW %>% 
+  inner_join(BLUP_GL, by=c("entry")) %>% 
+  inner_join(BLUP_GW, by=c("entry")) %>% 
+  inner_join(BLUP_SPS, by=c("entry")) %>% 
+  inner_join(BLUP_HD, by=c("entry")) %>% 
+  inner_join(BLUP_GFD, by=c("entry")) %>% 
+  inner_join(BLUP_HT, by=c("entry")) 
+
+#write.csv(SynOpHIF_BLUP_5AS, "SynOpHIF_BLUP_5AS.csv") 
+```
+
+### Chromosome 5AS fixed effect and phenotype distributions
+
+**Figure 4**   
+
+```{r distribution plots, message = FALSE, echo=FALSE}
+shortarm_5AS <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_2/file_S2.3.csv", na = "NA") #phenotype is BLUP calculation with 5AS as fixed effect
+shortarm <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_2/file_S2.4.csv", na = "NA") #phenotype is original BLUP calculation
+
+a <- shortarm %>% 
+  rename("GL (mm)" = "GL_BLUP",
+         "GW (mm)" = "GW_BLUP",
+         "TGW (g)" = "TGW_BLUP",
+         "HD (julian)" = "HD_BLUP",
+         "GFD (days)" = "GFD_BLUP",
+         "HT (cm)" = "HT_BLUP",
+         "SPS (total)" = "SPS_BLUP") %>% 
+  pivot_longer(contains("("), 
+               names_to = "Trait",
+               values_to = "Trait_value"
+               ) %>% 
+  ggplot(aes(x = chr5AS_consensus, y = Trait_value, color = KASP_341510829)) +
+    geom_boxplot(outlier.shape = NA) +
+    geom_jitter(na.rm = FALSE, width = 0.25, shape = 1) +
+    scale_color_manual(values = c("#3564D4", "mediumaquamarine"))+
+    theme_classic() +
+    theme(legend.position = c(0.88, 0.13),
+          legend.direction = "vertical",
+          text = element_text(size=12, face = "bold")) +
+    facet_wrap(~Trait, nrow=2, scales = "free") +
+    labs(color = "QTgw.cnl-5A allele") +
+    xlab("") +
+    ylab("Trait value") 
+
+b <- ggplot(data = shortarm, aes(x = TGW_BLUP, fill = chr5AS_consensus))+
+  geom_histogram(position = "identity", bins = 20, alpha = 0.8) + 
+  scale_fill_manual(values = c("mediumaquamarine","#3564D4"))+ 
+  theme_classic() +
+  theme(text = element_text(size = 12, face = "bold"), 
+          legend.position = c(0.25, 0.9),
+          legend.direction = "vertical",) +
+  labs(fill = "Chr 5AS status") +
+    xlab("TGW (g)") +
+    ylab("Count") 
+
+c <- ggplot(data = shortarm_5AS, aes(x = TGW_BLUP, fill = chr5AS_consensus))+
+  geom_histogram(position = "identity", bins = 20, alpha = 0.8) +
+  scale_fill_manual(values = c("mediumaquamarine","#3564D4"))+ 
+  theme_classic() +
+  theme(text = element_text(size = 12, face = "bold"), legend.position = "none") +
+  xlab("TGW (g)") +
+    ylab("") 
+
+#Figure 4
+ggarrange(a, ncol = 1, labels = "A", ggarrange(b, c, ncol = 2, labels = c("B", "C")))
+```
+
+### SynOpHIF chr5AS and QTgw.cnl-5A linkage disequilibrium
+
+```{r ld, echo = FALSE, message=FALSE}
+chr5Apheno <-  read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_2/file_S2.5.csv", na = c("-", "NA"))
+chr5Apheno$chr5AS_status <- as.factor(chr5Apheno$chr5AS_status)
+chr5Apheno$KASP_341510829 <- as.factor(chr5Apheno$KASP_341510829)
+
+P_W <- chr5Apheno %>% 
+  filter(chr5AS_status == "present", KASP_341510829 == "W7984") 
+A_O <-chr5Apheno %>% 
+  filter(chr5AS_status == "absent", KASP_341510829 == "Opata")
+
+#Recombinants table
+a = P_W %>% 
+  rbind(A_O) %>% 
+  rename(TGW = BLUP_TGW) %>% 
+  rename(GL = BLUP_GL) %>% 
+  rename(GW = BLUP_GW) %>% 
+  rename(HD = BLUP_HD) %>%
+  rename(SPS = BLUP_SPS) %>%
+  rename(GFD = BLUP_GFD) %>%
+  rename(HT = BLUP_HT) %>%
+  rename(chr5AS = chr5AS_status) %>%
+  rename(QTgw.cnl_5A = KASP_341510829) %>%
+  gt() %>% 
+  tab_spanner(
+    label = "Recombinants", 
+    columns = 1:3
+  ) %>% 
+  fmt_number(
+    columns = 4:7,
+    decimals = 2
+  )  %>% 
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = cells_column_labels(everything())
+  ) %>%
+  tab_options(table.align='left')
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
+
+#Allele frequency
+total <- length(unique(chr5Apheno$Entry)) #including NAs
+Present <- chr5Apheno %>% 
+  filter(chr5AS_status == "present")
+Absent <- chr5Apheno %>% 
+  filter(chr5AS_status == "absent")
+P5AS <- length(Present$Entry)
+A5AS <- length(Absent$Entry)
+
+Opata <- chr5Apheno %>% 
+  filter(KASP_341510829 == "Opata")
+W7984 <- chr5Apheno %>% 
+  filter(KASP_341510829 == "W7984")
+OpataQTL <- length(Opata$Entry)
+W7984QTL <- length(W7984$Entry)
+Allele <- c("5AS, present", "5AS, absent", "QTgw.cnl-5A, Opata", "QTgw.cnl-5A, W7984")
+
+subset <- tibble(P5AS/total, A5AS/total, OpataQTL/total, W7984QTL/total) %>% 
+  pivot_longer(cols = ends_with("total"),
+               names_to = "drop",
+               values_to = "Allele frequency") %>% 
+  cbind(Allele) 
+subset <-  subset(subset, select = -c(drop))
+a = subset %>% 
+  relocate(Allele, .before = "Allele frequency") %>% 
+  gt(rowname_col = "Allele") %>% 
+  fmt_number(
+    columns = 2,
+    decimals = 2
+  )  %>% 
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = cells_column_labels(everything())
+  ) %>%
+  tab_options(table.align='left')
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
+
+#Haplotype freq and LD
+P_W <- length(P_W$Entry)
+A_O <- length(A_O$Entry)
+P_O <- chr5Apheno %>% 
+  filter(chr5AS_status == "present", KASP_341510829 == "Opata")
+P_O <- length(P_O$Entry)
+A_W <-chr5Apheno %>% 
+  filter(chr5AS_status == "absent", KASP_341510829 == "W7984")
+A_W <- length(A_W$Entry)
+
+#D = haplotype freq - allele freq * allele freq
+D = (P_O/total) - ((P5AS/total)*(OpataQTL/total))
+#r2 = D^2 / product of allele freqs
+r2 = (D^2)/((P5AS/total) * (A5AS/total) * (OpataQTL/total) * (W7984QTL/total))
+
+Haplotype <- c("present:Opata", "present:W7984", "absent:Opata", "absent:W7984", "coefficient of correlation")
+
+subset <- tibble(P_O/total, P_W/total, A_O/total, A_W/total, r2) %>% 
+  pivot_longer(cols = 1:5,
+               names_to = "drop",
+               values_to = "Haplotype frequency") %>% 
+  cbind(Haplotype)
+subset <-  subset(subset, select = -c(drop))
+a = subset %>% 
+  relocate(Haplotype, .before = "Haplotype frequency") %>% 
+  gt(rowname_col = "Haplotype") %>% 
+  fmt_number(
+    columns = 2,
+    decimals = 2
+  )  %>% 
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = list(
+      cells_column_labels(everything()),
+      cells_body(
+        columns = 2,
+        rows = "coefficient of correlation" 
+  )))%>%
+  tab_options(table.align='left')
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
+```
+
+### T-test: phenotype vs chromosome 5AS presence / absence OR QTL Opata / W7984 allele  
+
+```{r t.test chr 5A and QTL, echo=FALSE}
+#T.test for chr5A and QTL
+HD_5ASt.test <- t_test(BLUP_HD ~ chr5AS_status, data = chr5Apheno) 
+HD_5ASt.test <- HD_5ASt.test$p
+TGW_5ASt.test <- t_test(BLUP_TGW ~ chr5AS_status, data = chr5Apheno) 
+TGW_5ASt.test <- TGW_5ASt.test$p
+GW_5ASt.test <- t_test(BLUP_GW ~ chr5AS_status, data = chr5Apheno) 
+GW_5ASt.test <- GW_5ASt.test$p
+GL_5ASt.test <- t_test(BLUP_GL ~ chr5AS_status, data = chr5Apheno) 
+GL_5ASt.test <- GL_5ASt.test$p
+SPS_5ASt.test <- t_test(BLUP_SPS ~ chr5AS_status, data = chr5Apheno) 
+SPS_5ASt.test <- SPS_5ASt.test$p
+GFD_5ASt.test <- t_test(BLUP_GFD ~ chr5AS_status, data = chr5Apheno) 
+GFD_5ASt.test <- GFD_5ASt.test$p
+HT_5ASt.test <- t_test(BLUP_HT ~ chr5AS_status, data = chr5Apheno) 
+HT_5ASt.test <- HT_5ASt.test$p
+
+HD_QTLt.test <- t_test(BLUP_HD ~ KASP_341510829, data = chr5Apheno) 
+HD_QTLt.test <- HD_QTLt.test$p
+TGW_QTLt.test <- t_test(BLUP_TGW ~ KASP_341510829, data = chr5Apheno) 
+TGW_QTLt.test <- TGW_QTLt.test$p
+GW_QTLt.test <- t_test(BLUP_GW ~ KASP_341510829, data = chr5Apheno) 
+GW_QTLt.test <- GW_QTLt.test$p
+GL_QTLt.test <- t_test(BLUP_GL ~ KASP_341510829, data = chr5Apheno) 
+GL_QTLt.test <- GL_QTLt.test$p
+SPS_QTLt.test <- t_test(BLUP_SPS ~ KASP_341510829, data = chr5Apheno) 
+SPS_QTLt.test <- SPS_QTLt.test$p
+GFD_QTLt.test <- t_test(BLUP_GFD ~ KASP_341510829, data = chr5Apheno) 
+GFD_QTLt.test <- GFD_QTLt.test$p
+HT_QTLt.test <- t_test(BLUP_HT ~ KASP_341510829, data = chr5Apheno) 
+HT_QTLt.test <- HT_QTLt.test$p
+
+t.test <- c("TGW ~ 5AS", "TGW ~ QTL", "GL ~ 5AS", "GL ~ QTL", "GW ~ 5AS", "GW ~ QTL", "HD ~ 5AS", "HD ~ QTL", "SPS ~ 5AS", "SPS ~ QTL","GFD ~ 5AS", "GFD ~ QTL","HT ~ 5AS", "HT ~ QTL")
+
+subset <- tibble(TGW_5ASt.test, TGW_QTLt.test, GL_5ASt.test, GL_QTLt.test, GW_5ASt.test, GW_QTLt.test,HD_5ASt.test, HD_QTLt.test, SPS_5ASt.test, SPS_QTLt.test, GFD_5ASt.test, GFD_QTLt.test, HT_5ASt.test, HT_QTLt.test) %>% 
+  pivot_longer(cols = 1:14,
+               names_to = "drop",
+               values_to = "P value") %>% 
+  cbind(t.test) 
+subset <-  subset(subset, select = -c(drop))
+a = subset %>% 
+  relocate(t.test, .before = "P value") %>% 
+  gt() %>% 
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")
+    ),
+    locations = list(
+      cells_column_labels(everything())))%>%
+  tab_options(table.align='left')%>% 
+  fmt_scientific(
+  columns = 2,
+  decimals = 3)
+gtsave(a, "table.png")
+invisible(file.remove("table.png"))
+```
+
