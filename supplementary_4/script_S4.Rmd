@@ -13,7 +13,7 @@ All packages, data, and statistical analysis for reproducing RNA-seq results rep
 
 ### Experimental design  
 
-**RNA sample collection specifics:** The plant tissue comes from the maturing grains of 4 SynOpHIF haplotypes, at 4 and 8 DPA. In 2020 the four haplotypes were grown in a randomized greenhouse, and tagged 40 spikes for the 4 DPA time point and randomly sampled sets of 10 spikes across 4 biological reps. In addition, 8 spikes were tagged for the 8 DPA time point randomly sampled sets of 2 spikes across 4 biological reps (fewer needed based on increased grain size). The RNA was extracted using a modified hot borrate method, and 3 of the 4 biological reps were sent to Novogene for extraction (24 samples)
+**RNA sample collection specifics:** The plant tissue comes from the maturing grains of 4 SynOpHIF haplotypes, at 4 and 8 DPA. In 2020 the four haplotypes were grown in a randomized greenhouse, and tagged 40 spikes for the 4 DPA time point and randomly sampled sets of 10 spikes across 4 biological reps. In addition, 8 spikes were tagged for the 8 DPA time point randomly sampled sets of 2 spikes across 4 biological reps (fewer needed based on increased grain size). The RNA was extracted using a modified hot borrate method, and 3 of the 4 biological reps were sent to Novogene for sequencing (24 samples)
 
 **Novogene specifics:**  
 species: wheat  
