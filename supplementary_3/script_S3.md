@@ -21,7 +21,7 @@ library(kableExtra) # R/kableExtra package version 1.1.0
 library(tibble) # R/tible package version 2.1.3
 library(lme4) # R/lme4 package version 1.1-26
 library(emmeans) # R/emmeans package version 1.4.6
-library(ggpubr) # R/ggpubr package version 0.2.5 
+library(ggpubr) # R/ggpubr package version 0.4.0 
 ```
 
 **Load data:**
