@@ -24,6 +24,7 @@ library(gt) #R/gt version 0.2.2
 library(car) # R/car package version 3.0-10
 library(emmeans) # R/emmeans package version 1.4.6
 library(rstatix) # R/rstatix package version 0.6.0
+library(ggpubr) # R/ggpubr package version 0.4.0 
 ```
 
 ### SynOpDH broad sense heritability and BLUP phenotypes 

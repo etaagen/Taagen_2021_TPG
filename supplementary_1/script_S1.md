@@ -18,6 +18,7 @@ library(gt) #R/gt version 0.2.2
 library(car) # R/car package version 3.0-10
 library(emmeans) # R/emmeans package version 1.4.6
 library(rstatix) # R/rstatix package version 0.6.0
+library(ggpubr) # R/ggpubr package version 0.4.0 
 ```
 
 ### SynOpDH broad sense heritability and BLUP phenotypes
@@ -1078,8 +1079,8 @@ summary(TGW_perm <- scanone(SynOpData, pheno.col = "BLUP_TGW", method="hk", n.pe
 
     ## LOD thresholds (1000 permutations)
     ##      lod
-    ## 5%  3.08
-    ## 10% 2.81
+    ## 5%  3.19
+    ## 10% 2.84
 
 ``` r
 summary(GL_perm <- scanone(SynOpData, pheno.col = "BLUP_GL", method="hk", n.perm=1000))#5% 3.19
@@ -1089,8 +1090,8 @@ summary(GL_perm <- scanone(SynOpData, pheno.col = "BLUP_GL", method="hk", n.perm
 
     ## LOD thresholds (1000 permutations)
     ##      lod
-    ## 5%  3.05
-    ## 10% 2.76
+    ## 5%  3.06
+    ## 10% 2.74
 
 ``` r
 summary(GW_perm <- scanone(SynOpData, pheno.col = "BLUP_GW", method="hk", n.perm=1000))#5% 3.10
@@ -1100,8 +1101,8 @@ summary(GW_perm <- scanone(SynOpData, pheno.col = "BLUP_GW", method="hk", n.perm
 
     ## LOD thresholds (1000 permutations)
     ##      lod
-    ## 5%  3.19
-    ## 10% 2.86
+    ## 5%  3.12
+    ## 10% 2.75
 
 ``` r
 summary(HD_perm <- scanone(SynOpData, pheno.col = "BLUP_HD", method="hk", n.perm=1000))#5% 3.07
@@ -1112,7 +1113,7 @@ summary(HD_perm <- scanone(SynOpData, pheno.col = "BLUP_HD", method="hk", n.perm
     ## LOD thresholds (1000 permutations)
     ##      lod
     ## 5%  3.11
-    ## 10% 2.82
+    ## 10% 2.81
 
 ``` r
 LOD_BLUP <- cbind(TGW_BLUP, GL_BLUP, GW_BLUP, HD_BLUP) 
