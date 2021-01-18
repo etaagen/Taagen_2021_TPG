@@ -30,9 +30,8 @@ library(sva) #version 3.36.0
 library(DESeq2) #version 1.28.1
 library(vsn) #version 3.56.0
 library(PCAtools) #Bioconductor version 2.0.0
-library("pheatmap") #version 1.0.12
+library(pheatmap) #version 1.0.12
 library(reshape) #version 0.8.8
-library(plotly) #version 4.9.2.1
 library(kableExtra) #version 1.1.0
 library(gt) #R/gt version 0.2.2
 library(ggpubr) # R/ggpubr package version 0.2.5 
@@ -40,7 +39,6 @@ library(ggbio) #Bioconductor version 1.36.0
 library(biovizBase) #Bioconductor version 1.37.0
 library(gghighlight) #Bioconductor version 0.3.0
 library(goseq) #Bioconductor version 1.40.0
-library(gt) #R/gt version 0.2.2
 ```
 
 ### Table 3, RNAseq HIF entry selection:
