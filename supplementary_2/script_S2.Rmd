@@ -18,10 +18,10 @@ library(tidyverse) # R/tidyverse version 1.3.0
 library(lme4) #R/lme4 package version 1.1-21
 library(knitr) # R/knitr package version 1.28 
 library(rlang) #R/rlang package version 0.4.5
+library(ggpubr) #R/ggpubr package version 0.4.0
 library(emmeans) # R/emmeans package version 1.4.6
 library(car) # R/car package version 3.0-10
 library(gt) #R/gt version 0.2.2
-library(ggpubr) # R/ggpubr package version 0.2.5 
 library(rstatix) # R/rstatix package version 0.6.0
 ```
 
