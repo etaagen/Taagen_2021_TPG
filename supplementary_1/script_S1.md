@@ -14,9 +14,6 @@ library(knitr) # R/knitr package version 1.28
 library(kableExtra) # R/kableExtra package version 1.1.0
 library(qtl) #R/qtl package version 1.46-2
 library(tibble) # R/tible package version 2.1.3 
-library(ggpubr) # R/ggpubr package version 0.2.5 
-library(scales) # R/scales package version 1.1.0
-library(svglite) #R/svglite version 1.2.3.2
 library(gt) #R/gt version 0.2.2
 library(car) # R/car package version 3.0-10
 library(emmeans) # R/emmeans package version 1.4.6
@@ -1081,8 +1078,8 @@ summary(TGW_perm <- scanone(SynOpData, pheno.col = "BLUP_TGW", method="hk", n.pe
 
     ## LOD thresholds (1000 permutations)
     ##      lod
-    ## 5%  3.12
-    ## 10% 2.84
+    ## 5%  3.08
+    ## 10% 2.81
 
 ``` r
 summary(GL_perm <- scanone(SynOpData, pheno.col = "BLUP_GL", method="hk", n.perm=1000))#5% 3.19
@@ -1092,8 +1089,8 @@ summary(GL_perm <- scanone(SynOpData, pheno.col = "BLUP_GL", method="hk", n.perm
 
     ## LOD thresholds (1000 permutations)
     ##      lod
-    ## 5%  3.07
-    ## 10% 2.79
+    ## 5%  3.05
+    ## 10% 2.76
 
 ``` r
 summary(GW_perm <- scanone(SynOpData, pheno.col = "BLUP_GW", method="hk", n.perm=1000))#5% 3.10
@@ -1103,8 +1100,8 @@ summary(GW_perm <- scanone(SynOpData, pheno.col = "BLUP_GW", method="hk", n.perm
 
     ## LOD thresholds (1000 permutations)
     ##      lod
-    ## 5%  3.18
-    ## 10% 2.83
+    ## 5%  3.19
+    ## 10% 2.86
 
 ``` r
 summary(HD_perm <- scanone(SynOpData, pheno.col = "BLUP_HD", method="hk", n.perm=1000))#5% 3.07
@@ -1114,8 +1111,8 @@ summary(HD_perm <- scanone(SynOpData, pheno.col = "BLUP_HD", method="hk", n.perm
 
     ## LOD thresholds (1000 permutations)
     ##      lod
-    ## 5%  3.19
-    ## 10% 2.89
+    ## 5%  3.11
+    ## 10% 2.82
 
 ``` r
 LOD_BLUP <- cbind(TGW_BLUP, GL_BLUP, GW_BLUP, HD_BLUP) 
