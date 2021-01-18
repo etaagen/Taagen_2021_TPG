@@ -84,7 +84,7 @@ This pipeline uses command line scripts and R code. If you would like to reprodu
 
 ### Download data 
 
-**Sequencing data from from NCBI BioProject**  
+**Sequencing data from from NCBI BioProject ID: PRJNA693003**  
 ```{r download seq data, eval=FALSE}
 #run in CL
 wget 
