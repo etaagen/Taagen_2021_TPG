@@ -15,7 +15,7 @@ across 4 biological reps. In addition, 8 spikes were tagged for the 8
 DPA time point randomly sampled sets of 2 spikes across 4 biological
 reps (fewer needed based on increased grain size). The RNA was extracted
 using a modified hot borrate method, and 3 of the 4 biological reps were
-sent to Novogene for extraction (24 samples)
+sent to Novogene for sequencing (24 samples)
 
 **Novogene specifics:**  
 species: wheat  
@@ -32,9 +32,8 @@ library(sva) #version 3.36.0
 library(DESeq2) #version 1.28.1
 library(vsn) #version 3.56.0
 library(PCAtools) #Bioconductor version 2.0.0
-library("pheatmap") #version 1.0.12
+library(pheatmap) #version 1.0.12
 library(reshape) #version 0.8.8
-library(plotly) #version 4.9.2.1
 library(kableExtra) #version 1.1.0
 library(gt) #R/gt version 0.2.2
 library(ggpubr) # R/ggpubr package version 0.2.5 
@@ -42,7 +41,6 @@ library(ggbio) #Bioconductor version 1.36.0
 library(biovizBase) #Bioconductor version 1.37.0
 library(gghighlight) #Bioconductor version 0.3.0
 library(goseq) #Bioconductor version 1.40.0
-library(gt) #R/gt version 0.2.2
 ```
 
 ### Table 3, RNAseq HIF entry selection:
@@ -62,13 +60,18 @@ path, or navigate directories to execute the analysis. For example, our
 working directory was `/workdir/et395` - if you see this, change it to
 fit your path\!
 
-### Download data
+### Download fastq data
 
-**Sequencing data from from NCBI BioProject**
+**Sequencing data from from NCBI BioProject ID: PRJNA693003**  
+The 48 paired-end fastq (.fq.gz) files are available for download here:
+<https://www.ncbi.nlm.nih.gov/sra/PRJNA693003>  
+Navigate through each `SRA-experiment` link, scroll down to the `Run`
+table link, and then click the `Data access` tab. From here you can
+right click the `Original format` fastq files and `Copy Link Address`.
 
 ``` r
-#run in CL
-wget 
+#run in CL, 
+wget #paste `Copy Link Address` for all 48 original format fastq files 
 # copy files to your working directory
 ```
 
@@ -558,7 +561,7 @@ sequence.
 Opata_W7984_4DPA_DE <- cond_1_2 %>% 
   filter(padj < 0.01) %>% 
   arrange(row) %>%  #575 genes, and need unique col names
-  rename(baseMean_OW_4DPA = baseMean, 
+  dplyr::rename(baseMean_OW_4DPA = baseMean, 
          log2FoldChange_OW_4DPA = log2FoldChange,
          lfcSE_OW_4DPA = lfcSE,
          stat_OW_4DPA = stat,
@@ -568,7 +571,7 @@ Opata_W7984_4DPA_DE <- cond_1_2 %>%
 Opata_W7984_8DPA_DE <- cond_5_6 %>% 
   filter(padj < 0.01) %>% 
   arrange(row) %>%  #521 genes 
-  rename(baseMean_OW_8DPA = baseMean,
+  dplyr::rename(baseMean_OW_8DPA = baseMean,
          log2FoldChange_OW_8DPA = log2FoldChange,
          lfcSE_OW_8DPA = lfcSE,
          stat_OW_8DPA = stat,
@@ -577,14 +580,14 @@ Opata_W7984_8DPA_DE <- cond_5_6 %>%
  
 #merge
 Opata_W7984_DE <- full_join(Opata_W7984_4DPA_DE, Opata_W7984_8DPA_DE, by = c("row", "chr", "start", "end")) %>%
-  rename(gene_id = row) %>% 
+  dplyr::rename(gene_id = row) %>% 
   relocate(chr, start, end, .after = gene_id) #612 genes
  
 #CO1 vs W7984
 CO1_W7984_4DPA_DE <- cond_2_3 %>% 
   filter(padj < 0.01) %>% 
   arrange(row) %>%   #577 genes
-  rename(baseMean_CW_4DPA = baseMean, 
+  dplyr::rename(baseMean_CW_4DPA = baseMean, 
          log2FoldChange_CW_4DPA = log2FoldChange,
          lfcSE_CW_4DPA = lfcSE,
          stat_CW_4DPA = stat,
@@ -594,7 +597,7 @@ CO1_W7984_4DPA_DE <- cond_2_3 %>%
 CO1_W7984_8DPA_DE <- cond_6_7 %>% 
   filter(padj < 0.01) %>% 
   arrange(row) %>% #523 genes 
-  rename(baseMean_CW_8DPA = baseMean,
+  dplyr::rename(baseMean_CW_8DPA = baseMean,
          log2FoldChange_CW_8DPA = log2FoldChange,
          lfcSE_CW_8DPA = lfcSE,
          stat_CW_8DPA = stat,
@@ -602,14 +605,14 @@ CO1_W7984_8DPA_DE <- cond_6_7 %>%
          padj_CW_8DPA = padj) 
 #merge
 CO1_W7984_DE <- full_join(CO1_W7984_4DPA_DE, CO1_W7984_8DPA_DE,  by = c("row", "chr", "start", "end")) %>% 
-  rename(gene_id = row) %>% 
+  dplyr::rename(gene_id = row) %>% 
   relocate(chr, start, end, .after = gene_id)#616 genes
 
 #CO2 vs W7984
 CO2_W7984_4DPA_DE <- cond_2_4 %>% 
   filter(padj < 0.01) %>% 
   arrange(row) %>%   #577 genes
-  rename(baseMean_C2W_4DPA = baseMean, 
+  dplyr::rename(baseMean_C2W_4DPA = baseMean, 
          log2FoldChange_C2W_4DPA = log2FoldChange,
          lfcSE_C2W_4DPA = lfcSE,
          stat_C2W_4DPA = stat,
@@ -619,7 +622,7 @@ CO2_W7984_4DPA_DE <- cond_2_4 %>%
 CO2_W7984_8DPA_DE <- cond_6_8 %>% 
   filter(padj < 0.01) %>% 
   arrange(row) %>% #523 genes 
-  rename(baseMean_C2W_8DPA = baseMean,
+  dplyr::rename(baseMean_C2W_8DPA = baseMean,
          log2FoldChange_C2W_8DPA = log2FoldChange,
          lfcSE_C2W_8DPA = lfcSE,
          stat_C2W_8DPA = stat,
@@ -627,7 +630,7 @@ CO2_W7984_8DPA_DE <- cond_6_8 %>%
          padj_C2W_8DPA = padj) 
 #merge
 CO2_W7984_DE <- full_join(CO2_W7984_4DPA_DE, CO2_W7984_8DPA_DE,  by = c("row", "chr", "start", "end")) %>% 
-  rename(gene_id = row) %>% 
+  dplyr::rename(gene_id = row) %>% 
   relocate(chr, start, end, .after = gene_id) #1485 genes
 
 
@@ -704,10 +707,10 @@ paste -d "," gene_names.txt GOterms.txt > RefSeqv1.1_HC_GOterms.txt
 #First, genes: all gene.id from transcriptome with DE noted with "1"
 total <- data.frame(pos$gene_id)
 total <- total %>% 
-  rename(gene_id = pos.gene_id)
+  dplyr::rename(gene_id = pos.gene_id)
 DE_gene_id <- data.frame(Haplotype_padj_DE$gene_id, 1)
 DE_gene_id <- DE_gene_id %>% 
-  rename(gene_id = Haplotype_padj_DE.gene_id,
+  dplyr::rename(gene_id = Haplotype_padj_DE.gene_id,
          DE = X1)
 
 merge <- left_join(total, DE_gene_id, by = "gene_id") 
@@ -721,7 +724,7 @@ DEgenes <- deframe(DEgenes)
 #second, my_length_vector, gene.id and gene length
 my_length_vector <- data.frame(pos$gene_id, pos$end-pos$start)
 my_length_vector <- my_length_vector %>% 
-  rename(gene_id = pos.gene_id,
+  dplyr::rename(gene_id = pos.gene_id,
          length = pos.end...pos.start) 
 my_length_vector$gene_id <- as.factor(my_length_vector$gene_id)  
 my_length_vector$length <- as.numeric(my_length_vector$length) 
@@ -790,7 +793,7 @@ and informed the list of candidate genes (Table 4)
 filter <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_4/file_S4.16.csv")
 filter <- filter[!duplicated(filter$DEGs), ]
 filter <- filter %>% 
-  rename("gene_id" = "DEGs")
+  dplyr::rename("gene_id" = "DEGs")
 filter <- Haplotype_padj_DE %>%
   right_join(filter, by = c("gene_id")) %>% 
   arrange(chr)
