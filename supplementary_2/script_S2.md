@@ -17,6 +17,7 @@ library(emmeans) # R/emmeans package version 1.4.6
 library(car) # R/car package version 3.0-10
 library(gt) #R/gt version 0.2.2
 library(rstatix) # R/rstatix package version 0.6.0
+library(inauguration) #R/inauguration version 0.0.0.90
 ```
 
 ### SynOp HIF BLUP phenotypes
@@ -1172,7 +1173,7 @@ SynOpHIF_BLUP_5AS <- BLUP_TGW %>%
 
 **Figure 4**
 
-![](script_S2_files/figure-gfm/distribution%20plots-1.png)<!-- -->
+![](script_S2_files/figure-gfm/figure%204-1.png)<!-- -->
 
 ### SynOpHIF chr5AS and QTgw.cnl-5A linkage disequilibrium
 

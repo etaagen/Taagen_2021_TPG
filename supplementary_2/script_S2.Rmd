@@ -23,6 +23,7 @@ library(emmeans) # R/emmeans package version 1.4.6
 library(car) # R/car package version 3.0-10
 library(gt) #R/gt version 0.2.2
 library(rstatix) # R/rstatix package version 0.6.0
+library(inauguration) #R/inauguration version 0.0.0.90
 ```
 
 ### SynOp HIF BLUP phenotypes
@@ -610,12 +611,14 @@ ggplot(data = blast_position, aes(x= reorder(Genome, Mbp), y= Mbp, color= SNP))+
 The 129 entry fine-mapping population can be subset into crossover groups based on shared recombination intervals between SNPs and comparisons across BLUP phenotypes. Please see `HIF_groups.xlsx` for entries in each group (n = # of entries per group).  
 ```{r HIF group figures, echo=FALSE, message= FALSE}
 HIFttest <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_2/file_S2.7.csv")
+# color scheme
+pal2 <- inauguration("inauguration_2021", 2) 
 
 #TGW
 HIFttest %>%
   ggplot(aes(x=reorder(Group_n, -order), y= TGW_BLUP, fill=Phenotype_TGW))+ 
   geom_boxplot(width=0.3, alpha = 0.8)+
-  scale_fill_manual(values = c("#3564D4", "mediumaquamarine"))+
+  scale_fill_manual(values = pal2)+
   theme(axis.title.x = element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
   theme_bw(base_size = 18)+
   coord_flip()+
@@ -628,7 +631,7 @@ HIFttest %>%
 HIFttest %>%
   ggplot(aes(x=reorder(Group_n, -order), y= GW_BLUP, fill=Phenotype_GW))+ 
   geom_boxplot(width=0.3, alpha = 0.8)+
-  scale_fill_manual(values = c("#3564D4", "mediumaquamarine"))+
+  scale_fill_manual(values = pal2)+
   theme(axis.title.x = element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
   theme_bw(base_size = 18)+
   coord_flip()+
@@ -641,7 +644,7 @@ HIFttest %>%
 HIFttest %>%
   ggplot(aes(x=reorder(Group_n, -order), y= GL_BLUP, fill=Phenotype_GW))+ 
   geom_boxplot(width=0.3, alpha = 0.8)+
-  scale_fill_manual(values = c("#3564D4", "mediumaquamarine"))+
+  scale_fill_manual(values = pal2)+
   theme(axis.title.x = element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
   theme_bw(base_size = 18)+
   coord_flip()+
@@ -654,7 +657,7 @@ HIFttest %>%
 HIFttest %>%
   ggplot(aes(x=reorder(Group_n, -order), y= SPS_BLUP, fill=Phenotype_GW))+ 
   geom_boxplot(width=0.3, alpha = 0.8)+
-  scale_fill_manual(values = c("#3564D4", "mediumaquamarine"))+
+  scale_fill_manual(values = pal2)+
   theme(axis.title.x = element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
   theme_bw(base_size = 18)+
   coord_flip()+
@@ -667,7 +670,7 @@ HIFttest %>%
 HIFttest %>%
   ggplot(aes(x=reorder(Group_n, -order), y= HD_BLUP, fill=Phenotype_GW))+ 
   geom_boxplot(width=0.3, alpha = 0.8)+
-  scale_fill_manual(values = c("#3564D4", "mediumaquamarine"))+
+  scale_fill_manual(values = pal2)+
   theme(axis.title.x = element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
   theme_bw(base_size = 18)+
   coord_flip()+
@@ -680,7 +683,7 @@ HIFttest %>%
 HIFttest %>%
   ggplot(aes(x=reorder(Group_n, -order), y= GFD_BLUP, fill=Phenotype_GW))+ 
   geom_boxplot(width=0.3, alpha = 0.8)+
-  scale_fill_manual(values = c("#3564D4", "mediumaquamarine"))+
+  scale_fill_manual(values = pal2)+
   theme(axis.title.x = element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
   theme_bw(base_size = 18)+
   coord_flip()+
@@ -693,7 +696,7 @@ HIFttest %>%
 HIFttest %>%
   ggplot(aes(x=reorder(Group_n, -order), y= HT_BLUP, fill=Phenotype_GW))+ 
   geom_boxplot(width=0.3, alpha = 0.8)+
-  scale_fill_manual(values = c("#3564D4", "mediumaquamarine"))+
+  scale_fill_manual(values = pal2)+
   theme(axis.title.x = element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
   theme_bw(base_size = 18)+
   coord_flip()+
@@ -708,8 +711,8 @@ HIFttest %>%
 #figure 2
 fig2A <- HIFttest %>%
   ggplot(aes(x=reorder(Group_n, -order), y= TGW_BLUP, fill=Phenotype_TGW))+ 
-  geom_boxplot(width=0.3, alpha = 0.8)+
-  scale_fill_manual(values = c("#3564D4", "mediumaquamarine"))+
+  geom_boxplot(width=0.3, alpha = 0.9)+
+  scale_fill_manual(values = pal2)+
   theme(axis.title.x = element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
   theme_bw(base_size = 18)+
   coord_flip()+
@@ -721,8 +724,8 @@ ggsave(file="fig2A", plot=fig2A, bg="transparent", width=7, height=5, device = "
 
 fig2B <- HIFttest %>%
   ggplot(aes(x=reorder(Group_n, -order), y= GW_BLUP, fill=Phenotype_GW))+ 
-  geom_boxplot(width=0.3, alpha = 0.8)+
-  scale_fill_manual(values = c("#3564D4", "mediumaquamarine"))+
+  geom_boxplot(width=0.3, alpha = 0.9)+
+  scale_fill_manual(values = pal2)+
   theme(axis.title.x = element_blank(), panel.grid.major= element_blank(), panel.border= element_blank())+
   theme_bw(base_size = 18)+
   coord_flip()+
@@ -807,7 +810,11 @@ TGW_int <- lmer(TGW ~ (1|Entry) +  chr5AS_consensus * KASP_341510829, data = Syn
 summary(TGW_int) # the interaction estimate +/- std. error includes zero, not significant 
 
 emmeans(TGW_int, pairwise ~ chr5AS_consensus*KASP_341510829)
-emmip(TGW_int, chr5AS_consensus ~ KASP_341510829, CIs = TRUE) #5AS present = heavier grains, Opata = heavier grains - they're in tight linkage but not interacting
+emmip(TGW_int, chr5AS_consensus ~ KASP_341510829, CIs = TRUE) + 
+    scale_color_manual(values = c("#749dae", "#5445b1"), name = "Chr 5AS", 
+                       labels = c("Absent", "Present")) + 
+  theme_bw()
+  #5AS present = heavier grains, Opata = heavier grains - they're in tight linkage but not interacting
 #Wald test, "Anova" from car package, is formal significance test for fixed effect
 Anova(TGW_int) #interaction is not significant
 
@@ -893,7 +900,7 @@ SynOpHIF_BLUP_5AS <- BLUP_TGW %>%
 
 **Figure 4**   
 
-```{r distribution plots, message = FALSE, echo=FALSE}
+```{r figure 4, message = FALSE, echo=FALSE}
 shortarm_5AS <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_2/file_S2.3.csv", na = "NA") #phenotype is BLUP calculation with 5AS as fixed effect
 shortarm <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_2/file_S2.4.csv", na = "NA") #phenotype is original BLUP calculation
 
@@ -912,7 +919,7 @@ a <- shortarm %>%
   ggplot(aes(x = chr5AS_consensus, y = Trait_value, color = KASP_341510829)) +
     geom_boxplot(outlier.shape = NA) +
     geom_jitter(na.rm = FALSE, width = 0.25, shape = 1) +
-    scale_color_manual(values = c("#3564D4", "mediumaquamarine"))+
+    scale_color_manual(values = c("#5445b1","#749dae"))+
     theme_classic() +
     theme(legend.position = c(0.88, 0.13),
           legend.direction = "vertical",
@@ -923,8 +930,8 @@ a <- shortarm %>%
     ylab("Trait value") 
 
 b <- ggplot(data = shortarm, aes(x = TGW_BLUP, fill = chr5AS_consensus))+
-  geom_histogram(position = "identity", bins = 20, alpha = 0.8) + 
-  scale_fill_manual(values = c("mediumaquamarine","#3564D4"))+ 
+  geom_histogram(position = "identity", bins = 20, alpha = 0.9) + 
+  scale_fill_manual(values = c("#749dae","#5445b1"))+ 
   theme_classic() +
   theme(text = element_text(size = 12, face = "bold"), 
           legend.position = c(0.25, 0.9),
@@ -934,15 +941,17 @@ b <- ggplot(data = shortarm, aes(x = TGW_BLUP, fill = chr5AS_consensus))+
     ylab("Count") 
 
 c <- ggplot(data = shortarm_5AS, aes(x = TGW_BLUP, fill = chr5AS_consensus))+
-  geom_histogram(position = "identity", bins = 20, alpha = 0.8) +
-  scale_fill_manual(values = c("mediumaquamarine","#3564D4"))+ 
+  geom_histogram(position = "identity", bins = 20, alpha = 0.9) +
+  scale_fill_manual(values = c("#749dae","#5445b1"))+ 
   theme_classic() +
   theme(text = element_text(size = 12, face = "bold"), legend.position = "none") +
   xlab("TGW (g)") +
     ylab("") 
 
 #Figure 4
+#tiff("fig4.tiff", width = 4000, height = 4500, res = 500)
 ggarrange(a, ncol = 1, labels = "A", ggarrange(b, c, ncol = 2, labels = c("B", "C")))
+#dev.off() 
 ```
 
 ### SynOpHIF chr5AS and QTgw.cnl-5A linkage disequilibrium
