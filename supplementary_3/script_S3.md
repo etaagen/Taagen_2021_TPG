@@ -22,6 +22,7 @@ library(tibble) # R/tible package version 2.1.3
 library(lme4) # R/lme4 package version 1.1-26
 library(emmeans) # R/emmeans package version 1.4.6
 library(ggpubr) # R/ggpubr package version 0.4.0 
+library(inauguration) #R/inauguration version 0.0.0.90
 ```
 
 **Load data:**
@@ -592,10 +593,13 @@ condtions, 0.05/5, p-values less than 0.01 are significant
 </table>
 
 ``` r
+#set color palette
+pal2 <- inauguration("inauguration_2021", 2)
+
 p1 <- ggplot(data = group1, aes(x = DPA, y=GW, color = genotype, group=genotype))+
   geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
   geom_line(stat="summary", na.rm = TRUE)+
-  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+  scale_color_manual(values = c(pal2), 
                      labels = c("Opata (+)", "W7984 (-)"))+
   theme_classic2()+
   ylab("grain width (mm)")+
@@ -608,7 +612,7 @@ p1 <- ggplot(data = group1, aes(x = DPA, y=GW, color = genotype, group=genotype)
 p2 <- ggplot(data = group1, aes(x = DPA, y=GL, color = genotype, group=genotype))+
   geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
   geom_line(stat="summary", na.rm = TRUE)+
-  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+  scale_color_manual(values = pal2, 
                      labels = c("Opata (+)", "W7984 (-)"))+
   theme_classic2()+
   ylab("grain length (mm)")+
@@ -621,7 +625,7 @@ p2 <- ggplot(data = group1, aes(x = DPA, y=GL, color = genotype, group=genotype)
 p3 <- ggplot(data = group1, aes(x = DPA, y=FW, color = genotype, group=genotype))+
   geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
   geom_line(stat="summary", na.rm = TRUE)+
-  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+  scale_color_manual(values = pal2, 
                      labels = c("Opata (+)", "W7984 (-)"))+
   theme_classic2()+
   ylab("fresh weight (g)")+
@@ -634,7 +638,7 @@ p3 <- ggplot(data = group1, aes(x = DPA, y=FW, color = genotype, group=genotype)
 p4 <- ggplot(data = group1, aes(x = DPA, y=DW, color = genotype, group=genotype))+
   geom_jitter(width = 0.1, alpha = 0.4, na.rm = TRUE)+ 
   geom_line(stat="summary", na.rm = TRUE)+
-  scale_color_manual(values = c("mediumblue", "mediumaquamarine"), 
+  scale_color_manual(values = pal2, 
                      labels = c("Opata (+)", "W7984 (-)"))+
   theme_classic2()+
   ylab("dry weight (g)")+
