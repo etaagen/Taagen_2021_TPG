@@ -19,6 +19,7 @@ library(car) # R/car package version 3.0-10
 library(emmeans) # R/emmeans package version 1.4.6
 library(rstatix) # R/rstatix package version 0.6.0
 library(ggpubr) # R/ggpubr package version 0.4.0 
+library(inauguration) #R/inauguration version 0.0.0.90
 ```
 
 ### SynOpDH broad sense heritability and BLUP phenotypes
@@ -1079,8 +1080,8 @@ summary(TGW_perm <- scanone(SynOpData, pheno.col = "BLUP_TGW", method="hk", n.pe
 
     ## LOD thresholds (1000 permutations)
     ##      lod
-    ## 5%  3.19
-    ## 10% 2.84
+    ## 5%  3.16
+    ## 10% 2.78
 
 ``` r
 summary(GL_perm <- scanone(SynOpData, pheno.col = "BLUP_GL", method="hk", n.perm=1000))#5% 3.19
@@ -1090,8 +1091,8 @@ summary(GL_perm <- scanone(SynOpData, pheno.col = "BLUP_GL", method="hk", n.perm
 
     ## LOD thresholds (1000 permutations)
     ##      lod
-    ## 5%  3.06
-    ## 10% 2.74
+    ## 5%  3.19
+    ## 10% 2.93
 
 ``` r
 summary(GW_perm <- scanone(SynOpData, pheno.col = "BLUP_GW", method="hk", n.perm=1000))#5% 3.10
@@ -1101,8 +1102,8 @@ summary(GW_perm <- scanone(SynOpData, pheno.col = "BLUP_GW", method="hk", n.perm
 
     ## LOD thresholds (1000 permutations)
     ##      lod
-    ## 5%  3.12
-    ## 10% 2.75
+    ## 5%  3.06
+    ## 10% 2.82
 
 ``` r
 summary(HD_perm <- scanone(SynOpData, pheno.col = "BLUP_HD", method="hk", n.perm=1000))#5% 3.07
@@ -1132,6 +1133,7 @@ HD_BLUP_cM <- scanone(SynOpData_cM, pheno.col = "BLUP_HD", method = "hk")
 ### Phenotype variation explained by QTL
 
 `% var = 1 - 10^(-2 * LOD / n)`
+
 ![](script_S1_files/figure-gfm/variation%20explained-1.png)<!-- -->
 
 ### QTL plots

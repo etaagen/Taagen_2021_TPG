@@ -25,6 +25,7 @@ library(car) # R/car package version 3.0-10
 library(emmeans) # R/emmeans package version 1.4.6
 library(rstatix) # R/rstatix package version 0.6.0
 library(ggpubr) # R/ggpubr package version 0.4.0 
+library(inauguration) #R/inauguration version 0.0.0.90
 ```
 
 ### SynOpDH broad sense heritability and BLUP phenotypes 
@@ -614,8 +615,9 @@ gtsave(a, "table.png")
 invisible(file.remove("table.png"))
 ```
 
-### Phenotype variation explained by QTL   
-`% var = 1 - 10^(-2 * LOD / n)`
+### Phenotype variation explained by QTL    
+`% var = 1 - 10^(-2 * LOD / n)`  
+
 ```{r variation explained, echo=FALSE}
 QTL2D_TGW = (1 - 10^((-2*5.22)/162))*100
 QTL2D_GL = (1 - 10^((-2*7.7)/162))*100
@@ -638,6 +640,9 @@ invisible(file.remove("table.png"))
 ### QTL plots
 
 ```{r QTL plot, echo = FALSE}
+#color palette 
+pal4 <- inauguration("inauguration_2021", 4)
+
 #2D
 LOD_BLUP %>% 
   pivot_longer(cols = starts_with("lod"), 
@@ -650,7 +655,7 @@ LOD_BLUP %>%
     geom_hline(yintercept = 3.15, color = "black", linetype="dashed") + 
     theme_classic() +
     theme(text = element_text(size = 12, face = "bold"), legend.position = "bottom") + 
-    scale_color_manual(values = c("#ee8080", "darkolivegreen4", "#6CC2BD", "#d03161"), name = "Trait (BLUP)", 
+    scale_color_manual(values = pal4, name = "Trait (BLUP)", 
                        labels = c("GL", "GW", "HD", "TGW")) +
     ggtitle("Chromosome 2D QTL") +
     xlab("Chromosome 2D (cM)")
@@ -669,11 +674,11 @@ LOD_BLUP %>%
     geom_vline(xintercept = 250, color = "grey", linetype="dashed") +
     theme_classic() +
     theme(text = element_text(size = 12, face = "bold"), legend.position = "bottom") + 
-    scale_color_manual(values = c("gray48", "darkolivegreen4", "firebrick2", "#3564D4"), name = "Trait (BLUP)", 
+    scale_color_manual(values = pal4, name = "Trait (BLUP)", 
                        labels = c("GL", "GW", "HD", "TGW")) +
     xlab("Chromosome 5A (Mbp)") +
-    annotate("text", x=380, y=5, label= "QTgw.cnl-5A", color = "#3564D4", fontface = 'italic')  +
-    annotate("text", x=600, y=11, label= "VRN-1", color = "firebrick2", fontface = 'italic') 
+    annotate("text", x=380, y=5, label= "QTgw.cnl-5A", color = "#5c1a33", fontface = 'italic')  +
+    annotate("text", x=600, y=11, label= "VRN-1", color = "#f3c483", fontface = 'italic') 
 
 #dev.off() 
 
@@ -689,13 +694,10 @@ LOD_BLUP %>%
     geom_hline(yintercept = 3.15, color = "black", linetype="dashed") + 
     theme_classic() +
     theme(text = element_text(size = 12, face = "bold"), legend.position = "bottom") + 
-    scale_color_manual(values = c("#ee8080", "darkolivegreen4", "#6CC2BD", "#d03161"), name = "Trait (BLUP)", 
+    scale_color_manual(values = pal4, name = "Trait (BLUP)", 
                        labels = c("GL", "GW", "HD", "TGW")) +
     ggtitle("Chromosome 6A QTL") +
     xlab("Chromosome 6A (cM)")
-
-
-#svg(file="DHnoKASP.svg", plot=DH_noKASP, path = "/Users/ellataagen/Desktop/", width=10, height=7)
 ```
 
 ### Figure 1B  
@@ -709,8 +711,10 @@ chr5Apheno$KASP_341510829 <- as.factor(chr5Apheno$KASP_341510829)
 supp.labs <- c("GL (mm)", "GW (mm)", "TGW (g)")
 names(supp.labs) <- c("GL", "GW", "TGW")
 
+pal2 <- inauguration("inauguration_2021", 2)
 
-subset <-  subset(chr5Apheno, select = -c(BLUP_HD))
+subset <-  subset(chr5Apheno, select = -c(BLUP_HD)) 
+#tiff("fig1B.tiff", width = 3000, height = 2000, res = 500)
 subset[complete.cases(subset), ] %>%  
   rename("GL (mm)" = "BLUP_GL",
          "GW (mm)" = "BLUP_GW",
@@ -723,12 +727,13 @@ subset[complete.cases(subset), ] %>%
     geom_boxplot(outlier.shape = NA, na.rm = TRUE) +
     geom_jitter(na.rm = TRUE, width = 0.25, shape = 1) +
     facet_wrap(~Trait, ncol=3, scales = "free") +
-    scale_color_manual(values = c("#3564D4", "mediumaquamarine"))+
+    scale_color_manual(values = pal2)+
     theme_classic() +
     theme(text = element_text(size = 12, face = "bold"), legend.position = "bottom") +
     labs(color = "QTgw.cnl-5A allele") +
     xlab("") +
     ylab("Trait value") 
+#dev.off()
 ```
 
 ### QTL physical postions 
@@ -918,6 +923,7 @@ invisible(file.remove("table.png"))
 chr5Apheno$chr5AS_status <- as.factor(chr5Apheno$chr5AS_status)
 chr5Apheno$KASP_341510829 <- as.factor(chr5Apheno$KASP_341510829)
 
+pal3 <- inauguration("inauguration_2021", 3)
 chr5Apheno %>% 
   pivot_longer(contains("BLUP"), 
                names_to = "Trait",
@@ -926,7 +932,7 @@ chr5Apheno %>%
   ggplot(aes(x = chr5AS_status, y = Trait_value, color = KASP_341510829)) +
     geom_boxplot(outlier.shape = NA, na.rm = FALSE) +
     geom_jitter(na.rm = FALSE, width = 0.25, shape = 1) +
-    scale_color_manual(values = c("#3564D4", "mediumaquamarine","orange"))+
+    scale_color_manual(values = pal3)+
     theme_classic() +
     theme(legend.position = "bottom", text = element_text(size=20)) +
     facet_wrap(~Trait, nrow=2, scales = "free") +
