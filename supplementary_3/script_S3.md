@@ -7,6 +7,10 @@ for full R script.
 
 ## 2019 field environmnet
 
+<details>
+
+<summary>Click to expand </summary>
+
 A subset of ten HIF haplotypes (five *QTgw.cnl-5A-* and five
 *QTgw.cnl-5A+*) were selected for a days post anthesis (DPA) study that
 tracked fresh and dry grain weight (`FW`, `DW`) and grain width and
@@ -1925,7 +1929,13 @@ DW_opata/DW_W7984
 
     ## [1] 1.252364
 
+</details>
+
 ## 2020 greenhouse environment
+
+<details>
+
+<summary>Click to expand </summary>
 
 A subset of four *QTgw.cnl-5A* HIF haplotypes were selected to validate
 a days post anthesis (DPA) study in a greenhouse environment. The four
@@ -4399,3 +4409,5 @@ sen.
 </table>
 
 ![](script_S3_files/figure-gfm/CO1%20vs%20CO2%20figures-1.png)<!-- -->
+
+</details>

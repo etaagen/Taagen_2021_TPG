@@ -13,6 +13,8 @@ knitr::opts_chunk$set(echo = TRUE)
 All packages, data, and statistical analysis for reproducing SynOp HIF DPA results reported in Taagen et al. 2021. Please see `script_S3.Rmd` for full R script. 
 
 ## 2019 field environmnet  
+<details>
+  <summary>Click to expand </summary> 
 
 A subset of ten HIF haplotypes (five *QTgw.cnl-5A-* and five *QTgw.cnl-5A+*) were selected for a days post anthesis (DPA) study that tracked fresh and dry grain weight (`FW`, `DW`) and grain width and grain length (`GW`, `GL`) development over 0, 4, 10, 16 and 22 DPA.  
 
@@ -797,8 +799,12 @@ GW_opata/GW_W7984
 FW_opata/FW_W7984
 DW_opata/DW_W7984
 ```
+</details>  
 
-## 2020 greenhouse environment 
+## 2020 greenhouse environment  
+<details>
+  <summary>Click to expand </summary>
+  
 A subset of four *QTgw.cnl-5A* HIF haplotypes were selected to validate a days post anthesis (DPA) study in a greenhouse environment. The four *QTgw.cnl-5A* haplotypes were also used for the RNA-seq experiment, see table below. For plants grown in the greenhouse we measured fresh and dry grain weight (`FW`, `DW`) and grain width and grain length (`GW`, `GL`) development over 0, 4, 10, 16, 22 and 28 DPA, and senescence.  
 
 **Load data:**  
@@ -1331,3 +1337,5 @@ ggarrange(p1, p2, p3, p4,
           ncol = 4,
           common.legend = TRUE) 
 ```
+
+</details>
