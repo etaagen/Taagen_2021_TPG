@@ -5,7 +5,11 @@ All packages, data, and statistical analysis for reproducing SynOp HIF
 population results reported in Taagen et al. 2021. Please see
 `script_S2.Rmd` for full R script.
 
-**Load packages**
+### Load packages
+
+<details>
+
+<summary>Click to expand </summary>
 
 ``` r
 library(tidyverse) # R/tidyverse version 1.3.0
@@ -20,7 +24,13 @@ library(rstatix) # R/rstatix package version 0.6.0
 library(inauguration) #R/inauguration version 0.0.0.90
 ```
 
+</details>
+
 ### SynOp HIF BLUP phenotypes
+
+<details>
+
+<summary>Click to expand </summary>
 
 A 129-entry inbred subset of SynOp HIF entries and four checks (W7984,
 Opata, Tom and Glenn) were were selected and grown in randomized
@@ -173,7 +183,13 @@ SynOpHIF_BLUP <- BLUP_TGW %>%
 #write.csv(SynOpHIF_BLUP, "SynOpHIF_BLUP.csv") 
 ```
 
+</details>
+
 ### Phenotypes across years, Table 2
+
+<details>
+
+<summary>Click to expand </summary>
 
 ``` r
 sny19a <- SynOpHIF_Phenotypes %>% 
@@ -583,13 +599,25 @@ summary(aov(GW_BLUP ~ KASP_341510829, data = blup_pheno))
 
 ![](script_S2_files/figure-gfm/table2-1.png)<!-- -->
 
+</details>
+
 ### KASP marker sequence order comparison with 10 + Genome Project
+
+<details>
+
+<summary>Click to expand </summary>
 
 Each color represents SNP BLAST position across 12 genomes. See
 `file_S2.6` for marker names.  
 ![](script_S2_files/figure-gfm/marker%20comparison-1.png)<!-- -->
 
+</details>
+
 ### Fine-mapping figures
+
+<details>
+
+<summary>Click to expand </summary>
 
 The 129 entry fine-mapping population can be subset into crossover
 groups based on shared recombination intervals between SNPs and
@@ -597,7 +625,13 @@ comparisons across BLUP phenotypes. Please see `HIF_groups.xlsx` for
 entries in each group (n = \# of entries per group).  
 ![](script_S2_files/figure-gfm/HIF%20group%20figures-1.png)<!-- -->![](script_S2_files/figure-gfm/HIF%20group%20figures-2.png)<!-- -->![](script_S2_files/figure-gfm/HIF%20group%20figures-3.png)<!-- -->![](script_S2_files/figure-gfm/HIF%20group%20figures-4.png)<!-- -->![](script_S2_files/figure-gfm/HIF%20group%20figures-5.png)<!-- -->![](script_S2_files/figure-gfm/HIF%20group%20figures-6.png)<!-- -->![](script_S2_files/figure-gfm/HIF%20group%20figures-7.png)<!-- -->
 
+</details>
+
 ### Fine-mapping T.test
+
+<details>
+
+<summary>Click to expand </summary>
 
 T.test comparisons for each group vs QTgw.cnl-5A+ or QTgw.cnl-5A- (based
 on like-phenotype)
@@ -1025,7 +1059,13 @@ t.test(GW_BLUP ~ Group, data = groupW14)
     ##           mean in group 14 mean in group QTgw.cnl-5A- 
     ##                   3.327941                   3.068392
 
+</details>
+
 ### Test for interaction between 5AS and QTL
+
+<details>
+
+<summary>Click to expand </summary>
 
     ## Linear mixed model fit by maximum likelihood  ['lmerMod']
     ## Formula: TGW ~ (1 | Entry) + chr5AS_consensus * KASP_341510829
@@ -1091,7 +1131,13 @@ t.test(GW_BLUP ~ Group, data = groupW14)
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
+</details>
+
 ### Univariate models to account for chr 5AS in BLUP phenotype
+
+<details>
+
+<summary>Click to expand </summary>
 
 `phenotype ~ (1|Entry) + (1|Rep) + SynOpHIF + chr5AS_consensus`
 
@@ -1169,16 +1215,36 @@ SynOpHIF_BLUP_5AS <- BLUP_TGW %>%
 #write.csv(SynOpHIF_BLUP_5AS, "SynOpHIF_BLUP_5AS.csv") 
 ```
 
+</details>
+
 ### Chromosome 5AS fixed effect and phenotype distributions
+
+<details>
+
+<summary>Click to expand </summary>
 
 **Figure 4**
 
 ![](script_S2_files/figure-gfm/figure%204-1.png)<!-- -->
 
+</details>
+
 ### SynOpHIF chr5AS and QTgw.cnl-5A linkage disequilibrium
+
+<details>
+
+<summary>Click to expand </summary>
 
 ![](script_S2_files/figure-gfm/ld-1.png)<!-- -->![](script_S2_files/figure-gfm/ld-2.png)<!-- -->![](script_S2_files/figure-gfm/ld-3.png)<!-- -->
 
+</details>
+
 ### T-test: phenotype vs chromosome 5AS presence / absence OR QTL Opata / W7984 allele
 
+<details>
+
+<summary>Click to expand </summary>
+
 ![](script_S2_files/figure-gfm/t.test%20chr%205A%20and%20QTL-1.png)<!-- -->
+
+</details>

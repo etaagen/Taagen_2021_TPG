@@ -12,7 +12,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 All packages, data, and statistical analysis for reproducing SynOp HIF population results reported in Taagen et al. 2021. Please see `script_S2.Rmd` for full R script. 
 
-**Load packages**
+### Load packages 
+<details>
+  <summary>Click to expand </summary>
+  
 ```{r load packages, message=FALSE}
 library(tidyverse) # R/tidyverse version 1.3.0
 library(lme4) #R/lme4 package version 1.1-21
@@ -25,9 +28,12 @@ library(gt) #R/gt version 0.2.2
 library(rstatix) # R/rstatix package version 0.6.0
 library(inauguration) #R/inauguration version 0.0.0.90
 ```
+</details> 
 
 ### SynOp HIF BLUP phenotypes
-
+<details>
+  <summary>Click to expand </summary>
+  
 A 129-entry inbred subset of SynOp HIF entries and four checks (W7984, Opata, Tom and Glenn) were were selected and grown in randomized headrows. There are three site-year combinations (2019 Snyder, 2020 Caldwell, 2020 Helfer), with up to five replicates per entry, across 2019 and 2020 in Ithaca, NY (up to 3 rep at Snyder, 1 rep Caldwell, 1 rep Helfer). Univariate linear models with random environment and genotype effects were fitted with the `R/lme4` package to obtain best linear unbiased predictions (BLUPs) for `TGW`, `GL`, `GW`, `SPS`, `HD`, `GFD`, and `HT` phenotypes across the three environments.
 
 **Load data**  
@@ -460,8 +466,12 @@ SynOpHIF_BLUP <- BLUP_TGW %>%
 
 #write.csv(SynOpHIF_BLUP, "SynOpHIF_BLUP.csv") 
 ```
+</details>  
 
 ### Phenotypes across years, Table 2  
+<details>
+  <summary>Click to expand </summary> 
+  
 ```{r anova table 2, message=FALSE}
 sny19a <- SynOpHIF_Phenotypes %>% 
   filter(Rep == "A") 
@@ -587,8 +597,12 @@ a = table2 %>%
 gtsave(a, "table.png")
 invisible(file.remove("table.png"))
 ```
+</details>   
 
-### KASP marker sequence order comparison with 10 + Genome Project  
+### KASP marker sequence order comparison with 10 + Genome Project   
+<details>
+  <summary>Click to expand </summary>
+  
 Each color represents SNP BLAST position across 12 genomes. See `file_S2.6` for marker names.  
 ```{r marker comparison, echo=FALSE, message=FALSE}
 blast_position <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_2/file_S2.6.csv")
@@ -605,9 +619,12 @@ ggplot(data = blast_position, aes(x= reorder(Genome, Mbp), y= Mbp, color= SNP))+
         panel.grid.minor = element_blank(), 
         axis.text.x = element_text(angle = 45))
 ```
+</details>    
 
 ### Fine-mapping figures 
-
+<details>
+  <summary>Click to expand </summary>
+  
 The 129 entry fine-mapping population can be subset into crossover groups based on shared recombination intervals between SNPs and comparisons across BLUP phenotypes. Please see `HIF_groups.xlsx` for entries in each group (n = # of entries per group).  
 ```{r HIF group figures, echo=FALSE, message= FALSE}
 HIFttest <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_2/file_S2.7.csv")
@@ -735,8 +752,12 @@ fig2B <- HIFttest %>%
   theme(legend.position ="none")
 ggsave(file="fig2B", plot=fig2B, bg="transparent", width=7, height=5, device = "tiff", dpi = 700)
 ```
+</details>    
 
-### Fine-mapping T.test  
+### Fine-mapping T.test   
+<details>
+  <summary>Click to expand </summary> 
+  
 T.test comparisons for each group vs QTgw.cnl-5A+ or QTgw.cnl-5A- (based on like-phenotype)  
 ```{r t.test}
 # QTgw.cnl-5A+ vs QTgw.cnl-5A-
@@ -803,8 +824,12 @@ groupW14 <- HIFttest %>%
 t.test(TGW_BLUP ~ Group, data = groupW14)
 t.test(GW_BLUP ~ Group, data = groupW14)
 ```
+</details>    
 
-### Test for interaction between 5AS and QTL
+### Test for interaction between 5AS and QTL  
+<details>
+  <summary>Click to expand </summary>
+  
 ```{r interaction test, echo=FALSE}
 TGW_int <- lmer(TGW ~ (1|Entry) +  chr5AS_consensus * KASP_341510829, data = SynOpHIF_Phenotypes, REML = FALSE)
 summary(TGW_int) # the interaction estimate +/- std. error includes zero, not significant 
@@ -821,8 +846,11 @@ Anova(TGW_int) #interaction is not significant
 #use REML=FALSE for all tests, https://link.springer.com/article/10.3758/s13428-016-0809-y
 # models with different fixed effects (such as the “full” and “reduced” models fitted when testing a fixed effect) do not have comparable likelihoods when fitted using REML
 ```
+</details>    
 
 ### Univariate models to account for chr 5AS in BLUP phenotype  
+<details>
+  <summary>Click to expand </summary>
 
 `phenotype ~ (1|Entry) + (1|Rep) + SynOpHIF + chr5AS_consensus` 
  
@@ -895,9 +923,12 @@ SynOpHIF_BLUP_5AS <- BLUP_TGW %>%
 
 #write.csv(SynOpHIF_BLUP_5AS, "SynOpHIF_BLUP_5AS.csv") 
 ```
+</details>   
 
 ### Chromosome 5AS fixed effect and phenotype distributions
-
+<details>
+  <summary>Click to expand </summary>
+  
 **Figure 4**   
 
 ```{r figure 4, message = FALSE, echo=FALSE}
@@ -953,9 +984,12 @@ c <- ggplot(data = shortarm_5AS, aes(x = TGW_BLUP, fill = chr5AS_consensus))+
 ggarrange(a, ncol = 1, labels = "A", ggarrange(b, c, ncol = 2, labels = c("B", "C")))
 #dev.off() 
 ```
+</details>    
 
 ### SynOpHIF chr5AS and QTgw.cnl-5A linkage disequilibrium
-
+<details>
+  <summary>Click to expand </summary>
+  
 ```{r ld, echo = FALSE, message=FALSE}
 chr5Apheno <-  read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_2/file_S2.5.csv", na = c("-", "NA"))
 chr5Apheno$chr5AS_status <- as.factor(chr5Apheno$chr5AS_status)
@@ -1081,9 +1115,12 @@ a = subset %>%
 gtsave(a, "table.png")
 invisible(file.remove("table.png"))
 ```
+</details> 
 
 ### T-test: phenotype vs chromosome 5AS presence / absence OR QTL Opata / W7984 allele  
-
+<details>
+  <summary>Click to expand </summary>
+  
 ```{r t.test chr 5A and QTL, echo=FALSE}
 #T.test for chr5A and QTL
 HD_5ASt.test <- t_test(BLUP_HD ~ chr5AS_status, data = chr5Apheno) 
@@ -1140,4 +1177,4 @@ a = subset %>%
 gtsave(a, "table.png")
 invisible(file.remove("table.png"))
 ```
-
+</details> 
