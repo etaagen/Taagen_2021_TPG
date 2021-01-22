@@ -5,7 +5,11 @@ All packages, data, and statistical analysis for reproducing SynOpDH
 population results reported in Taagen et al. 2021. Please see
 `script_S1.Rmd` for full R script.
 
-**Load packages**
+### Load packages
+
+<details>
+
+<summary>Click to expand </summary>
 
 ``` r
 library(tidyverse) # R/tidyverse version 1.3.0
@@ -22,7 +26,13 @@ library(ggpubr) # R/ggpubr package version 0.4.0
 library(inauguration) #R/inauguration version 0.0.0.90
 ```
 
+</details>
+
 ### SynOpDH broad sense heritability and BLUP phenotypes
+
+<details>
+
+<summary>Click to expand </summary>
 
 A 162-entry subset of 215 SynOpDH entries were grown in headrows in four
 field-year combinations, with up to six replicates per entry, from
@@ -829,7 +839,13 @@ write.csv(BLUP_GW, "SynOpDH_BLUP_GW.csv")
 write.csv(BLUP_HD, "SynOpDH_BLUP_HD.csv")
 ```
 
+</details>
+
 ### SynOpDH Genetic Linkage Map
+
+<details>
+
+<summary>Click to expand </summary>
 
 A genetic linkage map of the SynOpDH population was constructed from a
 subset of 1,551 [GBS](https://doi.org/10.1371/journal.pone.0032253) and
@@ -988,7 +1004,13 @@ SynOpDHMap<-pull.map(SynOpDH, as.table=T)
 write.csv(SynOpDHMap, "file_S1.9.csv")
 ```
 
+</details>
+
 ### QTL mapping
+
+<details>
+
+<summary>Click to expand </summary>
 
 In order to associate SynOpDH genotype and phenotype data, QTL mapping
 was performed with the R package “qtl”. The `file_ S1.3.csv` data set
@@ -1080,8 +1102,8 @@ summary(TGW_perm <- scanone(SynOpData, pheno.col = "BLUP_TGW", method="hk", n.pe
 
     ## LOD thresholds (1000 permutations)
     ##      lod
-    ## 5%  3.16
-    ## 10% 2.78
+    ## 5%  3.10
+    ## 10% 2.86
 
 ``` r
 summary(GL_perm <- scanone(SynOpData, pheno.col = "BLUP_GL", method="hk", n.perm=1000))#5% 3.19
@@ -1091,8 +1113,8 @@ summary(GL_perm <- scanone(SynOpData, pheno.col = "BLUP_GL", method="hk", n.perm
 
     ## LOD thresholds (1000 permutations)
     ##      lod
-    ## 5%  3.19
-    ## 10% 2.93
+    ## 5%  3.09
+    ## 10% 2.83
 
 ``` r
 summary(GW_perm <- scanone(SynOpData, pheno.col = "BLUP_GW", method="hk", n.perm=1000))#5% 3.10
@@ -1102,8 +1124,8 @@ summary(GW_perm <- scanone(SynOpData, pheno.col = "BLUP_GW", method="hk", n.perm
 
     ## LOD thresholds (1000 permutations)
     ##      lod
-    ## 5%  3.06
-    ## 10% 2.82
+    ## 5%  3.07
+    ## 10% 2.80
 
 ``` r
 summary(HD_perm <- scanone(SynOpData, pheno.col = "BLUP_HD", method="hk", n.perm=1000))#5% 3.07
@@ -1113,7 +1135,7 @@ summary(HD_perm <- scanone(SynOpData, pheno.col = "BLUP_HD", method="hk", n.perm
 
     ## LOD thresholds (1000 permutations)
     ##      lod
-    ## 5%  3.11
+    ## 5%  3.10
     ## 10% 2.81
 
 ``` r
@@ -1126,17 +1148,35 @@ GW_BLUP_cM <- scanone(SynOpData_cM, pheno.col = "BLUP_GW", method = "hk")
 HD_BLUP_cM <- scanone(SynOpData_cM, pheno.col = "BLUP_HD", method = "hk") 
 ```
 
+</details>
+
 ### QTL Summary
+
+<details>
+
+<summary>Click to expand </summary>
 
 ![](script_S1_files/figure-gfm/tidy%20LOD%20data%20and%20table-1.png)<!-- -->
 
+</details>
+
 ### Phenotype variation explained by QTL
+
+<details>
+
+<summary>Click to expand </summary>
 
 `% var = 1 - 10^(-2 * LOD / n)`
 
 ![](script_S1_files/figure-gfm/variation%20explained-1.png)<!-- -->
 
+</details>
+
 ### QTL plots
+
+<details>
+
+<summary>Click to expand </summary>
 
 ![](script_S1_files/figure-gfm/QTL%20plot-1.png)<!-- -->![](script_S1_files/figure-gfm/QTL%20plot-2.png)<!-- -->![](script_S1_files/figure-gfm/QTL%20plot-3.png)<!-- -->
 
@@ -1144,11 +1184,23 @@ HD_BLUP_cM <- scanone(SynOpData_cM, pheno.col = "BLUP_HD", method = "hk")
 
 ![](script_S1_files/figure-gfm/figure%201B-1.png)<!-- -->
 
+</details>
+
 ### QTL physical postions
+
+<details>
+
+<summary>Click to expand </summary>
 
 ![](script_S1_files/figure-gfm/QTL%20pos-1.png)<!-- -->
 
+</details>
+
 ### Test for interaction between 2D, 5A and 6A TGW QTL
+
+<details>
+
+<summary>Click to expand </summary>
 
     ## Analysis of Deviance Table (Type II Wald chisquare tests)
     ## 
@@ -1163,7 +1215,13 @@ HD_BLUP_cM <- scanone(SynOpData_cM, pheno.col = "BLUP_HD", method = "hk")
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
+</details>
+
 ### Phenotypes across years, Table 1
+
+<details>
+
+<summary>Click to expand </summary>
 
 ``` r
 cald16 <- SynOpDH_Phenotypes %>% 
@@ -1441,18 +1499,44 @@ summary(aov(BLUP_HD ~ KASP_341510829, data = chr5Apheno))
 
 ![](script_S1_files/figure-gfm/table1-1.png)<!-- -->
 
+</details>
+
 ### Parent and check entry averages across all observations
+
+<details>
+
+<summary>Click to expand </summary>
 
 ![](script_S1_files/figure-gfm/parent%20check-1.png)<!-- -->
 
+</details>
+
 ### Boxplots chromosome 5AS vs TGW
+
+<details>
+
+<summary>Click to expand </summary>
 
 ![](script_S1_files/figure-gfm/5AS%20plot-1.png)<!-- -->
 
+</details>
+
 ### SynOpDH chr5AS and QTgw.cnl-5A linkage disequilibrium
+
+<details>
+
+<summary>Click to expand </summary>
 
 ![](script_S1_files/figure-gfm/ld-1.png)<!-- -->![](script_S1_files/figure-gfm/ld-2.png)<!-- -->![](script_S1_files/figure-gfm/ld-3.png)<!-- -->
 
+</details>
+
 ### T-test: phenotype vs chromosome 5AS presence / absence OR QTL Opata / W7984 allele
 
+<details>
+
+<summary>Click to expand </summary>
+
 ![](script_S1_files/figure-gfm/t.test%20chr5A%20and%20QTL-1.png)<!-- -->
+
+</details>

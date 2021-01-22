@@ -12,7 +12,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 All packages, data, and statistical analysis for reproducing SynOpDH population results reported in Taagen et al. 2021. Please see `script_S1.Rmd` for full R script.     
 
-**Load packages**
+### Load packages 
+<details>
+  <summary>Click to expand </summary>
+  
 ```{r load packages, message=FALSE}
 library(tidyverse) # R/tidyverse version 1.3.0
 library(lme4) #R/lme4 package version 1.1-21 
@@ -27,9 +30,12 @@ library(rstatix) # R/rstatix package version 0.6.0
 library(ggpubr) # R/ggpubr package version 0.4.0 
 library(inauguration) #R/inauguration version 0.0.0.90
 ```
+</details>
 
 ### SynOpDH broad sense heritability and BLUP phenotypes 
-
+<details>
+  <summary>Click to expand </summary>
+  
 A 162-entry subset of 215 SynOpDH entries were grown in headrows in four field-year combinations, with up to six replicates per entry, from 2016-2018 in Ithaca, NY. Univariate mixed linear models with random environment and genotype effects were fitted with the R/lme4 package to obtain best linear unbiased predictions (BLUPs) for TGW, GL, GW and HD phenotypes across the four environments.  
 
 **Load data**  
@@ -364,9 +370,12 @@ write.csv(BLUP_GL, "SynOpDH_BLUP_GL.csv")
 write.csv(BLUP_GW, "SynOpDH_BLUP_GW.csv")
 write.csv(BLUP_HD, "SynOpDH_BLUP_HD.csv")
 ```
+</details>
 
 ### SynOpDH Genetic Linkage Map
-
+<details>
+  <summary>Click to expand </summary>
+  
 A genetic linkage map of the SynOpDH population was constructed from a subset of 1,551 [GBS](https://doi.org/10.1371/journal.pone.0032253) and [SSR](https://wheat.pw.usda.gov/cgi-bin/GG3/browse.cgi?class=marker) markers using the maximum likelihood algorithm in `R/qtl`.
 
 The `SynOpDH_Import_GeneticMap.csv` data set contains SynOpDH genotype data and genetic positions of markers on all chromosomes, and an index phenotype (TGW BLUP). The `SynOpDH_Import_GeneticMap.csv` marker order has not been constructed using maximum likelihood, and markers are spaced every cM. "A" genotype represent W7984 variants of genetic markers, "B" genotype represent Opata variants of genetic markers.  
@@ -482,9 +491,12 @@ plot.map(SynOpDH)
 SynOpDHMap<-pull.map(SynOpDH, as.table=T)
 write.csv(SynOpDHMap, "file_S1.9.csv")
 ```
+</details>
 
 ### QTL mapping
-
+<details>
+  <summary>Click to expand </summary>
+  
 In order to associate SynOpDH genotype and phenotype data, QTL mapping was performed with the R package "qtl". The `file_ S1.3.csv` data set contains all SynOpDH phenotype data, genotype data and genetic linkage map positions (from `file_S1.9.csv`) of markers on all chromosomes. The markers on chromosome 5A are in order of physical position, and a single marker representing the chromosome 5AS structural variant has been included as well (1,552 markers total). "A" genotype represent W7984 variants of genetic markers, "B" genotype represent Opata variants of genetic markers.    
 
 **Load data**  
@@ -532,9 +544,12 @@ GL_BLUP_cM <- scanone(SynOpData_cM, pheno.col = "BLUP_GL", method = "hk")
 GW_BLUP_cM <- scanone(SynOpData_cM, pheno.col = "BLUP_GW", method = "hk") 
 HD_BLUP_cM <- scanone(SynOpData_cM, pheno.col = "BLUP_HD", method = "hk") 
 ```
+</details>
 
 ### QTL Summary  
-
+<details>
+  <summary>Click to expand </summary>
+  
 ```{r tidy LOD data and table, echo=FALSE}
 tidy_LOD <- LOD_BLUP %>% 
   rownames_to_column(var = "marker") %>% 
@@ -614,8 +629,12 @@ a = LOD_BLUP %>%
 gtsave(a, "table.png")
 invisible(file.remove("table.png"))
 ```
+</details>
 
 ### Phenotype variation explained by QTL    
+<details>
+  <summary>Click to expand </summary>
+  
 `% var = 1 - 10^(-2 * LOD / n)`  
 
 ```{r variation explained, echo=FALSE}
@@ -636,9 +655,12 @@ a = tibble(QTL2D_TGW, QTL2D_GL, QTL5A_TGW, QTL5A_GW, QTL6A_TGW, QTL6A_GL) %>%
 gtsave(a, "table.png")
 invisible(file.remove("table.png"))
 ```
+</details>
 
 ### QTL plots
-
+<details>
+  <summary>Click to expand </summary>
+  
 ```{r QTL plot, echo = FALSE}
 #color palette 
 pal4 <- inauguration("inauguration_2021", 4)
@@ -735,8 +757,12 @@ subset[complete.cases(subset), ] %>%
     ylab("Trait value") 
 #dev.off()
 ```
+</details>
 
-### QTL physical postions 
+### QTL physical postions  
+<details>
+  <summary>Click to expand </summary>
+  
 ```{r QTL pos, echo=FALSE}
 
 pos <- tibble(QTL = c("QTgw.cnl-2D", "QTgw.cnl-5A", "QTgw.cnl-6A"), 'Flanking markers' = c("synopGBS929 - synopGBS579", "wmc705 - synopGBS284", "synopGBS42 - synopGBS1114"), cM = c("19.82 - 43.83", "0.1 - 4.49", "41.68 - 41.68"), 'RefSeqV1.0 flanking' = c("10,718,874 - 56,072,170", "290,035,203 - 487,755,214", "314,315,653 - 440,255,621"), 'Peak marker' = c("synopGBS1212", "synopGBS429", "synopGBS811"), 'RefSeqV1.0 peak' = c("35,003,633", "380,823,821", "358,607,834"))
@@ -754,9 +780,12 @@ a = pos %>%
 gtsave(a, "table.png")
 invisible(file.remove("table.png"))
 ```
+</details> 
 
 ### Test for interaction between 2D, 5A and 6A TGW QTL
-
+<details>
+  <summary>Click to expand </summary> 
+  
 ```{r qtl interaction, echo=FALSE, message=FALSE}
 SynOpDH_test <- read_csv("https://raw.githubusercontent.com/etaagen/Taagen_2021_TPG/main/supplementary_1/file_S1.1.csv", na = c("", NA))
 SynOpDH_test$SynOpDH_entry = as.factor(SynOpDH_test$SynOpDH_entry)
@@ -772,8 +801,12 @@ TGW_int <- lmer(TGW ~ (1|SynOpDH_entry) + (1|Environment) +
                 data = SynOpDH_test, REML = FALSE)
 Anova(TGW_int)
 ```
+</details> 
 
 ### Phenotypes across years, Table 1 
+<details>
+  <summary>Click to expand </summary> 
+  
 ```{r anova table 1, message=FALSE}
 cald16 <- SynOpDH_Phenotypes %>% 
   filter(Location == "Caldwell" & Year == "2016") 
@@ -897,8 +930,12 @@ a = table1 %>%
 gtsave(a, "table.png")
 invisible(file.remove("table.png"))
 ```
+</details> 
 
-### Parent and check entry averages across all observations
+### Parent and check entry averages across all observations  
+<details>
+  <summary>Click to expand </summary> 
+  
 ```{r parent check, echo=FALSE}
 a = parent_check %>% 
   rename("TGW (g)" = "TGW",
@@ -915,9 +952,12 @@ a = parent_check %>%
 gtsave(a, "table.png")
 invisible(file.remove("table.png"))
 ```
+</details> 
 
 ### Boxplots chromosome 5AS vs TGW
-
+<details>
+  <summary>Click to expand </summary> 
+  
 ```{r 5AS plot, echo = FALSE, warning=FALSE, message=FALSE}
 
 chr5Apheno$chr5AS_status <- as.factor(chr5Apheno$chr5AS_status)
@@ -941,10 +981,12 @@ chr5Apheno %>%
     xlab("Chromosome 5AS consensus") +
     ylab("Trait") 
 ```
-
+</details> 
 
 ### SynOpDH chr5AS and QTgw.cnl-5A linkage disequilibrium   
-
+<details>
+  <summary>Click to expand </summary> 
+  
 ```{r ld, echo= FALSE}
 P_W <- chr5Apheno %>% 
   filter(chr5AS_status == "present", KASP_341510829 == "W7984") 
@@ -1066,8 +1108,12 @@ a = subset %>%
 gtsave(a, "table.png")
 invisible(file.remove("table.png"))
 ```
+</details> 
 
-### T-test: phenotype vs chromosome 5AS presence / absence OR QTL Opata / W7984 allele
+### T-test: phenotype vs chromosome 5AS presence / absence OR QTL Opata / W7984 allele  
+<details>
+  <summary>Click to expand </summary>
+  
 ```{r t.test chr5A and QTL, echo=FALSE}
    
 #T.test for chr5A and QTL
@@ -1115,4 +1161,4 @@ a = subset %>%
 gtsave(a, "table.png")
 invisible(file.remove("table.png"))
 ```
-
+</details> 
