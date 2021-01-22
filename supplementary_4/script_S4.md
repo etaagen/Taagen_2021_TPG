@@ -7,6 +7,10 @@ full R script.
 
 ### Experimental design
 
+<details>
+
+<summary>Click to expand </summary>
+
 **RNA sample collection specifics:** The plant tissue comes from the
 maturing grains of 4 SynOpHIF haplotypes, at 4 and 8 DPA. In 2020 the
 four haplotypes were grown in a randomized greenhouse, and tagged 40
@@ -24,7 +28,13 @@ sample number: 24
 library type: non-directional, 150 bp, paired-end reads library  
 amount of data per sample: \> 6G
 
-**Load packages**
+</details>
+
+### Load packages
+
+<details>
+
+<summary>Click to expand </summary>
 
 ``` r
 library(tidyverse) #version 1.3.0
@@ -43,11 +53,23 @@ library(gghighlight) #Bioconductor version 0.3.0
 library(goseq) #Bioconductor version 1.40.0
 ```
 
+</details>
+
 ### Table 3, RNAseq HIF entry selection:
+
+<details>
+
+<summary>Click to expand </summary>
 
 ![](script_S4_files/figure-gfm/table%203-1.png)<!-- -->
 
-## RNA-seq analysis pipeline
+</details>
+
+### RNA-seq analysis pipeline
+
+<details>
+
+<summary>Click to expand </summary>
 
 This pipeline uses command line scripts and R code. If you would like to
 reproduce our results after the command line analysis, jump ahead to
@@ -203,7 +225,13 @@ cut -c 4-23 tmp_gene_attr > tmp_gene_id # cut to just gene id
 cut -f 1,4,5 tmp_gene | paste tmp_gene_id -> LC_gene_name_pos.txt #compile file and move with filezilla
 ```
 
+</details>
+
 ### Read count alignment summary
+
+<details>
+
+<summary>Click to expand </summary>
 
 Source: each sample `Log.final.out`, summaraized in table format here
 
@@ -211,7 +239,13 @@ Source: each sample `Log.final.out`, summaraized in table format here
 
 ![](script_S4_files/figure-gfm/LC%20alignment-1.png)<!-- -->
 
-## HC gene annotation differential expression analysis
+</details>
+
+### HC gene annotation differential expression analysis
+
+<details>
+
+<summary>Click to expand </summary>
 
 We begin with HC gene annotation complete analysis, followed by LC gene
 annotation analysis.
@@ -512,7 +546,13 @@ filter(chr == "chr5A") %>% #compare all p vals, and have x axis be pos.
 
 ![](script_S4_files/figure-gfm/HC%20Opata%20vs%20CO2%208DPA-2.png)<!-- -->![](script_S4_files/figure-gfm/HC%20Opata%20vs%20CO2%208DPA-3.png)<!-- -->
 
+</details>
+
 ### SNP variant check
+
+<details>
+
+<summary>Click to expand </summary>
 
 We also explored SNP variants in the candidate QTL region, chr 5A
 339757917 - 349628635 bp. We ran bcftools mpileup on the HC STAR
@@ -522,7 +562,13 @@ TraesCS5A02G16099, with annotation available in `file_S4.18.xlsx`. This
 gene is not deferentially expressed, and the annotation does not suggest
 it is a candidate for our phenotype.
 
+</details>
+
 ### Chromosome 5AS exploration
+
+<details>
+
+<summary>Click to expand </summary>
 
 **Chr 5AS heatmap** Sample groups 2 and 6 are from the W7984 haplotype.
 The DE detected between Opata, Recombinant I and Recombinant II with
@@ -554,7 +600,13 @@ sequence.
     ## )
     ## ℹ Use `spec()` for the full column specifications.
 
+</details>
+
 ### Extract DE genes for Opata / CO1 / CO2 vs W7984 haplotype
+
+<details>
+
+<summary>Click to expand </summary>
 
 ``` r
 #Opata vs W7984
@@ -666,7 +718,13 @@ W7984_chr5AS_DE <- Haplotype_padj_DE %>%
 haplotype**
 ![](script_S4_files/figure-gfm/DE%20not%20on%205A-1.png)<!-- -->
 
-## Gene ontology enrichment analysis
+</details>
+
+### Gene ontology enrichment analysis
+
+<details>
+
+<summary>Click to expand </summary>
 
 ``` r
 #run in CL
@@ -824,11 +882,23 @@ count(o < 0)
 
     ## [1] 51
 
+</details>
+
 ### Table 4: candidate genes
+
+<details>
+
+<summary>Click to expand </summary>
 
 ![](script_S4_files/figure-gfm/table%204-1.png)<!-- -->
 
-## LC gene annotation differential expression analysis
+</details>
+
+### LC gene annotation differential expression analysis
+
+<details>
+
+<summary>Click to expand </summary>
 
 We did not pursue additional analysis with the LC gene annotation beyond
 identifying DEGs.
@@ -1074,3 +1144,5 @@ condition analysis. To review all code please see the .Rmd file.
     ## using coord:genome to parse x scale
 
 ![](script_S4_files/figure-gfm/LC%20Opata%20vs%20CO2%208DPA-2.png)<!-- -->![](script_S4_files/figure-gfm/LC%20Opata%20vs%20CO2%208DPA-3.png)<!-- -->
+
+</details>
