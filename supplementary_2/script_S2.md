@@ -33,7 +33,7 @@ library(inauguration) #R/inauguration version 0.0.0.90
 <summary>Click to expand </summary>
 
 A 129-entry inbred subset of SynOp HIF entries and four checks (W7984,
-Opata, Tom and Glenn) were were selected and grown in randomized
+Opata, Tom, and Glenn) were were selected and grown in randomized
 headrows. There are three site-year combinations (2019 Snyder, 2020
 Caldwell, 2020 Helfer), with up to five replicates per entry, across
 2019 and 2020 in Ithaca, NY (up to 3 rep at Snyder, 1 rep Caldwell, 1
