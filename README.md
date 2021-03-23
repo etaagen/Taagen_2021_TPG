@@ -55,7 +55,7 @@ Data, analysis, and scripts for reviewing or reproducing results presented in Ta
 
 * **file_S2.12.xlsx**, HIF groups, with and without chr 5AS primers  
 
-* **file_S2.13.pdf**, Example of peak KASP marker clustering patterns 
+* **file_S2.13.pdf**, Example of peak KASP marker clustering patterns on segregating HIFs
 
 ### [DPA analysis, supplementary_3](https://github.com/etaagen/Taagen_2021_TPG/tree/main/supplementary_3)  
 
