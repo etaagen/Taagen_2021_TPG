@@ -1,7 +1,7 @@
 # Taagen et al., 2021, The Plant Genome 
 
 ### Reproducibility index  
-Data, analysis, and scripts for reviewing or reproducing results presented in Taagen et al., 2021. To view the final analysis output, please see the **.md** files. To view the entire script or download and reproduce analysis in R or command line, please see the **.Rmd** files. All of the data is accessible within .Rmd file via GitHub (no need to download data). **Please cite and/or credit:** (*manuscript under peer review*).
+Data, analysis, and scripts for reviewing or reproducing results presented in Taagen et al., 2021. To view the final analysis output, please see the **.md** files. To view the entire script or download and reproduce analysis in R or command line, please see the **.Rmd** files. All of the data is accessible within .Rmd file via GitHub (no need to download data). **Please cite and/or credit:** (*manuscript in production*).
 
 ### [SynOpDH analysis, supplementary_1](https://github.com/etaagen/Taagen_2021_TPG/tree/main/supplementary_1) 
 
